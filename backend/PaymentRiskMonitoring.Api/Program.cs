@@ -1,6 +1,11 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using PaymentRiskMonitoring.Api.Data;
+using PaymentRiskMonitoring.Api.Extensions;
+using PaymentRiskMonitoring.Api.Middleware;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +14,19 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("DefaultConnection is not configured.");
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.ConfigureApiBehavior();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Payment Risk Monitoring System API",
+        Version = "v1",
+        Description = "Internal API for card payment simulation, monitoring, and risk analysis."
+    });
+});
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services
@@ -21,9 +38,16 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Payment Risk Monitoring System API v1");
+        options.RoutePrefix = "swagger";
+    });
 
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -47,6 +71,8 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     Predicate = registration => registration.Tags.Contains("ready"),
     ResponseWriter = WriteHealthCheckResponse
 });
+
+app.Logger.LogInformation("Payment Risk Monitoring System API started.");
 
 app.Run();
 

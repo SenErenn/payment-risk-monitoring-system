@@ -20,10 +20,14 @@ payment-risk-monitoring-system/
 │   └── PaymentRiskMonitoring.Api/
 │       ├── Controllers/
 │       ├── Data/
-│       │   ├── Configurations/
-│       │   └── Migrations/
+│       ├── DTOs/
 │       ├── Entities/
-│       └── Enums/
+│       ├── Enums/
+│       ├── Exceptions/
+│       ├── Extensions/
+│       ├── Middleware/
+│       ├── Models/
+│       └── Validators/
 ├── frontend/
 │   └── src/
 ├── PaymentRiskMonitoring.slnx
@@ -51,6 +55,8 @@ dotnet run --launch-profile http
 In Development, the API applies pending EF Core migrations on startup.
 
 API runs at `http://localhost:5067`.
+
+Swagger UI: `http://localhost:5067/swagger`
 
 Health check: `GET http://localhost:5067/api/health`
 
@@ -109,7 +115,8 @@ This project is built incrementally across 30 PRs.
 | PR-002  | Done   | PostgreSQL + Docker infrastructure |
 | PR-003  | Done   | Core domain models             |
 | PR-004  | Done   | EF Core + initial migration    |
-| PR-005+ | —      | See project plan for details   |
+| PR-005  | Done   | API foundation                 |
+| PR-006+ | —      | See project plan for details   |
 
 ## License
 
