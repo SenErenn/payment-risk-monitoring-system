@@ -1,14 +1,20 @@
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { getNavigationForRole } from '../navigation/navItems'
 
 export function DashboardPage() {
   const { user } = useAuth()
+  const menuItems = getNavigationForRole(user?.role)
 
   return (
     <div className="page">
       <div className="page-header">
         <div>
           <h1>Dashboard</h1>
-          <p>Welcome back. Authentication is connected to the backend.</p>
+          <p>
+            Welcome back. Your role controls which sections appear in the
+            sidebar.
+          </p>
         </div>
       </div>
 
@@ -30,15 +36,19 @@ export function DashboardPage() {
       </div>
 
       <div className="notice-card">
-        <h2>What is ready</h2>
+        <h2>Available for your role</h2>
         <ul>
-          <li>JWT login against the ASP.NET Core API</li>
-          <li>Protected dashboard route</li>
-          <li>Role information available in the frontend session</li>
+          {menuItems.map((item) => (
+            <li key={item.path}>
+              <Link className="text-link" to={item.path}>
+                {item.label}
+              </Link>
+            </li>
+          ))}
         </ul>
         <p>
-          Full sidebar navigation and role-based menu differences arrive in
-          PR-008.
+          Placeholder pages are wired for navigation and role checks. Feature
+          modules land in later PRs.
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PaymentRiskMonitoring.Api.Authorization;
 using PaymentRiskMonitoring.Api.DTOs.Auth;
 using PaymentRiskMonitoring.Api.Exceptions;
 using PaymentRiskMonitoring.Api.Models.Responses;
@@ -29,7 +30,7 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<LoginResponse>.Ok(result, "Login successful."));
     }
 
-    [Authorize]
+    [Authorize(Policy = AuthorizationPolicies.StaffRead)]
     [HttpGet("me")]
     public async Task<ActionResult<ApiResponse<AuthenticatedUserDto>>> Me(CancellationToken cancellationToken)
     {
@@ -38,18 +39,53 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<AuthenticatedUserDto>.Ok(user, "Current user retrieved."));
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     [HttpGet("admin-check")]
     public ActionResult<ApiResponse<object>> AdminCheck()
     {
+        return Ok(ApiResponse<object>.Ok(
+            CreateRolePayload("Admin access confirmed."),
+            "Admin authorization succeeded."));
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.AnalystOrAdmin)]
+    [HttpGet("analyst-check")]
+    public ActionResult<ApiResponse<object>> AnalystCheck()
+    {
+        return Ok(ApiResponse<object>.Ok(
+            CreateRolePayload("Analyst access confirmed."),
+            "Analyst authorization succeeded."));
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.StaffRead)]
+    [HttpGet("access")]
+    public ActionResult<ApiResponse<object>> Access()
+    {
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+
         var payload = new
         {
-            message = "Admin access confirmed.",
-            role = User.FindFirstValue(ClaimTypes.Role),
+            role,
+            canManageUsers = role == AppRoles.Admin,
+            canManageRiskRules = role == AppRoles.Admin,
+            canManageCards = role == AppRoles.Admin,
+            canReviewRiskAlerts = role is AppRoles.Admin or AppRoles.Analyst,
+            canViewTransactions = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
+            canViewMerchants = role is AppRoles.Admin or AppRoles.Viewer,
             checkedAtUtc = DateTime.UtcNow
         };
 
-        return Ok(ApiResponse<object>.Ok(payload, "Admin authorization succeeded."));
+        return Ok(ApiResponse<object>.Ok(payload, "Access profile retrieved."));
+    }
+
+    private object CreateRolePayload(string message)
+    {
+        return new
+        {
+            message,
+            role = User.FindFirstValue(ClaimTypes.Role),
+            checkedAtUtc = DateTime.UtcNow
+        };
     }
 
     private Guid GetCurrentUserId()
