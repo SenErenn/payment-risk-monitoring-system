@@ -13,5 +13,6 @@ public static class AuthorizationPolicies
 {
     public const string AdminOnly = "AdminOnly";
     public const string AnalystOrAdmin = "AnalystOrAdmin";
+    public const string AdminOrViewer = "AdminOrViewer";
     public const string StaffRead = "StaffRead";
 }

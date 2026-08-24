@@ -40,6 +40,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<MerchantService>();
 
 if (builder.Environment.IsDevelopment())
 {

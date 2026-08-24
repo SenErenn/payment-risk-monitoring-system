@@ -16,6 +16,7 @@ public static class DatabaseSeeder
         logger.LogInformation("Database migrations applied successfully.");
 
         await SeedUsersAsync(dbContext, passwordHasher, logger);
+        await SeedMerchantsAsync(dbContext, logger);
     }
 
     private static async Task SeedUsersAsync(
@@ -66,6 +67,66 @@ public static class DatabaseSeeder
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation("Seeded {UserCount} development users.", users.Count);
+    }
+
+    private static async Task SeedMerchantsAsync(AppDbContext dbContext, ILogger logger)
+    {
+        if (await dbContext.Merchants.AnyAsync())
+        {
+            logger.LogInformation("Merchant seed skipped because merchants already exist.");
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+
+        var merchants = new List<Merchant>
+        {
+            new()
+            {
+                Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                MerchantCode = "MCH-MARKET-01",
+                Name = "PayScope Market Istanbul",
+                Category = "Grocery",
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new()
+            {
+                Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                MerchantCode = "MCH-CAFE-01",
+                Name = "Bosphorus Cafe",
+                Category = "Restaurant",
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new()
+            {
+                Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                MerchantCode = "MCH-TECH-01",
+                Name = "Anatolia Electronics",
+                Category = "Electronics",
+                IsActive = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new()
+            {
+                Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                MerchantCode = "MCH-TRAVEL-01",
+                Name = "Aegean Travel Desk",
+                Category = "Travel",
+                IsActive = false,
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        };
+
+        dbContext.Merchants.AddRange(merchants);
+        await dbContext.SaveChangesAsync();
+
+        logger.LogInformation("Seeded {MerchantCount} development merchants.", merchants.Count);
     }
 
     private static User CreateUser(

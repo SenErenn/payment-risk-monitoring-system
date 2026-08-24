@@ -1,5 +1,6 @@
 @baseUrl = http://localhost:5067
 @accessToken = replace_with_jwt_after_login
+@merchantId = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
 
 ### Health
 GET {{baseUrl}}/api/health
@@ -41,5 +42,59 @@ Accept: application/json
 ###
 ### Analyst check
 GET {{baseUrl}}/api/auth/analyst-check
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### List merchants
+GET {{baseUrl}}/api/merchants?page=1&pageSize=10
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Search merchants
+GET {{baseUrl}}/api/merchants?page=1&pageSize=10&search=cafe&isActive=true
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Merchant detail
+GET {{baseUrl}}/api/merchants/{{merchantId}}
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Create merchant
+POST {{baseUrl}}/api/merchants
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "merchantCode": "MCH-DEMO-99",
+  "name": "Demo Merchant",
+  "category": "Retail",
+  "isActive": true
+}
+
+###
+### Update merchant
+PUT {{baseUrl}}/api/merchants/{{merchantId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "PayScope Market Istanbul Updated",
+  "category": "Grocery"
+}
+
+###
+### Activate merchant
+POST {{baseUrl}}/api/merchants/{{merchantId}}/activate
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Deactivate merchant
+POST {{baseUrl}}/api/merchants/{{merchantId}}/deactivate
 Authorization: Bearer {{accessToken}}
 Accept: application/json
