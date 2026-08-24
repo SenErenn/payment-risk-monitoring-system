@@ -11,6 +11,7 @@ UI brand name: **PayScope**
 | Backend  | ASP.NET Core Web API (.NET 10)      |
 | Frontend | React + TypeScript + Vite           |
 | Database | PostgreSQL + EF Core                |
+| Auth     | JWT + Role Based Authorization      |
 
 ## Project Structure
 
@@ -27,6 +28,8 @@ payment-risk-monitoring-system/
 │       ├── Extensions/
 │       ├── Middleware/
 │       ├── Models/
+│       ├── Options/
+│       ├── Services/
 │       └── Validators/
 ├── frontend/
 │   └── src/
@@ -52,7 +55,7 @@ cd backend/PaymentRiskMonitoring.Api
 dotnet run --launch-profile http
 ```
 
-In Development, the API applies pending EF Core migrations on startup.
+In Development, the API applies pending EF Core migrations and seeds demo users on startup.
 
 API runs at `http://localhost:5067`.
 
@@ -62,11 +65,23 @@ Health check: `GET http://localhost:5067/api/health`
 
 Database readiness check: `GET http://localhost:5067/health/ready`
 
+Login: `POST http://localhost:5067/api/auth/login`
+
 Manual migration command (optional):
 
 ```bash
 dotnet ef database update --project backend/PaymentRiskMonitoring.Api/PaymentRiskMonitoring.Api.csproj
 ```
+
+### Development Users
+
+| Email | Password | Role |
+| ----- | -------- | ---- |
+| `admin@payscope.local` | `Admin123!` | Admin |
+| `analyst@payscope.local` | `Analyst123!` | Analyst |
+| `viewer@payscope.local` | `Viewer123!` | Viewer |
+
+These accounts are for local development only.
 
 ### Frontend
 
@@ -116,7 +131,8 @@ This project is built incrementally across 30 PRs.
 | PR-003  | Done   | Core domain models             |
 | PR-004  | Done   | EF Core + initial migration    |
 | PR-005  | Done   | API foundation                 |
-| PR-006+ | —      | See project plan for details   |
+| PR-006  | Done   | Authentication backend         |
+| PR-007+ | —      | See project plan for details   |
 
 ## License
 
