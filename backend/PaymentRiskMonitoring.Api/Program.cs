@@ -13,8 +13,12 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("DefaultConnection is not configured.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "DefaultConnection is not configured. Set ConnectionStrings:DefaultConnection via appsettings.Development.json or environment variables.");
+}
 
 builder.Services.AddControllers();
 builder.Services.ConfigureApiBehavior();
@@ -36,16 +40,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddCors(options =>
+
+if (builder.Environment.IsDevelopment())
 {
-    options.AddPolicy("FrontendDev", policy =>
+    builder.Services.AddCors(options =>
     {
-        policy
-            .WithOrigins("http://localhost:5173")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        options.AddPolicy("FrontendDev", policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
     });
-});
+}
+
 builder.Services
     .AddHealthChecks()
     .AddNpgSql(
@@ -76,7 +85,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("FrontendDev");
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("FrontendDev");
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

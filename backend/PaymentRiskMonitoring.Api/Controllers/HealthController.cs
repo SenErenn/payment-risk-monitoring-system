@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PaymentRiskMonitoring.Api.Models.Responses;
 
 namespace PaymentRiskMonitoring.Api.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/[controller]")]
 public class HealthController : ControllerBase
 {
