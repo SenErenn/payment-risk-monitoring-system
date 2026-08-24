@@ -13,6 +13,7 @@ public class HealthController : ControllerBase
         {
             status = "healthy",
             service = "Payment Risk Monitoring System",
+            databaseCheck = "/health/ready",
             timestamp = DateTime.UtcNow
         });
     }

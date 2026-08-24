@@ -10,7 +10,7 @@ UI brand name: **PayScope**
 | -------- | ----------------------------------- |
 | Backend  | ASP.NET Core Web API (.NET 10)      |
 | Frontend | React + TypeScript + Vite           |
-| Database | PostgreSQL (from PR-002)            |
+| Database | PostgreSQL                          |
 
 ## Project Structure
 
@@ -37,6 +37,7 @@ payment-risk-monitoring-system/
 ### Backend
 
 ```bash
+docker compose up -d postgres
 cd backend/PaymentRiskMonitoring.Api
 dotnet run
 ```
@@ -44,6 +45,8 @@ dotnet run
 API runs at `http://localhost:5067`.
 
 Health check: `GET http://localhost:5067/api/health`
+
+Database readiness check: `GET http://localhost:5067/health/ready`
 
 ### Frontend
 
@@ -55,6 +58,23 @@ npm run dev
 
 Frontend runs at `http://localhost:5173`.
 
+### PostgreSQL
+
+```bash
+docker compose up -d postgres
+docker compose ps
+```
+
+PostgreSQL runs at `localhost:5433`.
+
+Default development credentials:
+
+- Database: `payment_risk_monitoring`
+- Username: `payscope`
+- Password: `change_me`
+
+If you want to customize these values, create a local `.env` file by copying `.env.example`.
+
 ## Development Status
 
 This project is built incrementally across 30 PRs.
@@ -62,7 +82,8 @@ This project is built incrementally across 30 PRs.
 | PR      | Status | Description                    |
 | ------- | ------ | ------------------------------ |
 | PR-001  | Done   | Project foundation             |
-| PR-002+ | —      | See project plan for details   |
+| PR-002  | Done   | PostgreSQL + Docker infrastructure |
+| PR-003+ | —      | See project plan for details   |
 
 ## License
 
