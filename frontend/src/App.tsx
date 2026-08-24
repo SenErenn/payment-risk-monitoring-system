@@ -1,30 +1,32 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './auth/AuthContext'
+import { ProtectedRoute } from './auth/ProtectedRoute'
+import { PublicOnlyRoute } from './auth/PublicOnlyRoute'
+import { AppLayout } from './layouts/AppLayout'
+import { DashboardPage } from './pages/DashboardPage'
+import { LoginPage } from './pages/LoginPage'
 import './App.css'
 
 function App() {
   return (
-    <div className="app">
-      <header className="app-header">
-        <span className="brand">PayScope</span>
-        <span className="badge">Foundation</span>
-      </header>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<PublicOnlyRoute />}>
+            <Route path="/login" element={<LoginPage />} />
+          </Route>
 
-      <main className="app-main">
-        <h1>Payment Risk Monitoring System</h1>
-        <p className="subtitle">
-          Internal platform for card payment simulation, transaction monitoring,
-          and risk analysis.
-        </p>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+            </Route>
+          </Route>
 
-        <div className="status-card">
-          <p className="status-label">Frontend Status</p>
-          <p className="status-value">Running</p>
-        </div>
-      </main>
-
-      <footer className="app-footer">
-        <p>PR-001 — Project Foundation</p>
-      </footer>
-    </div>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 

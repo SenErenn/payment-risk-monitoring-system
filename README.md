@@ -33,6 +33,10 @@ payment-risk-monitoring-system/
 │       └── Validators/
 ├── frontend/
 │   └── src/
+│       ├── api/
+│       ├── auth/
+│       ├── layouts/
+│       └── pages/
 ├── PaymentRiskMonitoring.slnx
 ├── docker-compose.yml
 ├── .env.example
@@ -87,11 +91,16 @@ These accounts are for local development only.
 
 ```bash
 cd frontend
+cp .env.example .env
 npm install
 npm run dev
 ```
 
 Frontend runs at `http://localhost:5173`.
+
+After login you are redirected to `/dashboard`.
+
+Protected routes require a valid JWT from the backend.
 
 ### PostgreSQL
 
@@ -132,7 +141,8 @@ This project is built incrementally across 30 PRs.
 | PR-004  | Done   | EF Core + initial migration    |
 | PR-005  | Done   | API foundation                 |
 | PR-006  | Done   | Authentication backend         |
-| PR-007+ | —      | See project plan for details   |
+| PR-007  | Done   | Authentication frontend        |
+| PR-008+ | —      | See project plan for details   |
 
 ## License
 
