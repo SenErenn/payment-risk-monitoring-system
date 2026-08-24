@@ -69,6 +69,7 @@ public class AuthController : ControllerBase
             canManageUsers = role == AppRoles.Admin,
             canManageRiskRules = role == AppRoles.Admin,
             canManageCards = role == AppRoles.Admin,
+            canManageMerchants = role == AppRoles.Admin,
             canReviewRiskAlerts = role is AppRoles.Admin or AppRoles.Analyst,
             canViewTransactions = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
             canViewMerchants = role is AppRoles.Admin or AppRoles.Viewer,

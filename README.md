@@ -128,7 +128,19 @@ Backend authorization policies:
 
 - `AdminOnly` — Admin
 - `AnalystOrAdmin` — Admin, Analyst
+- `AdminOrViewer` — Admin, Viewer
 - `StaffRead` — Admin, Analyst, Viewer
+
+Merchant API (PR-009):
+
+- `GET /api/merchants` — list with pagination / search / isActive filter (Admin, Viewer)
+- `GET /api/merchants/{id}` — detail (Admin, Viewer)
+- `POST /api/merchants` — create (Admin)
+- `PUT /api/merchants/{id}` — update (Admin)
+- `POST /api/merchants/{id}/activate` — activate (Admin)
+- `POST /api/merchants/{id}/deactivate` — deactivate (Admin)
+
+Merchant UI arrives in PR-010.
 
 ### PostgreSQL
 
@@ -172,7 +184,8 @@ This project is built incrementally across 30 PRs.
 | PR-007  | Done   | Authentication frontend        |
 | PR-007.5 | Done  | Foundation & authentication audit |
 | PR-008  | Done   | Main layout + role authorization |
-| PR-009+ | —      | See project plan for details   |
+| PR-009  | Done   | Merchant backend CRUD            |
+| PR-010+ | —      | See project plan for details   |
 
 ## License
 

@@ -57,7 +57,7 @@ function App() {
                     <PlaceholderPage
                       title="Merchants"
                       description="Browse merchant profiles used in payment simulation."
-                      comingIn="PR-009"
+                      comingIn="PR-010"
                     />
                   }
                 />
