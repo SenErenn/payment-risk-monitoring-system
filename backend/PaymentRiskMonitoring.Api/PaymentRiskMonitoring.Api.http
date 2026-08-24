@@ -1,6 +1,27 @@
-@PaymentRiskMonitoring.Api_HostAddress = http://localhost:5067
+@baseUrl = http://localhost:5067
+@accessToken = replace_with_jwt_after_login
 
-GET {{PaymentRiskMonitoring.Api_HostAddress}}/weatherforecast/
+### Health
+GET {{baseUrl}}/api/health
 Accept: application/json
 
 ###
+### Database ready
+GET {{baseUrl}}/health/ready
+Accept: application/json
+
+###
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@payscope.local",
+  "password": "Admin123!"
+}
+
+###
+### Current user
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+Accept: application/json

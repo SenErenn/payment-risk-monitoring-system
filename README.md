@@ -61,6 +61,16 @@ dotnet run --launch-profile http
 
 In Development, the API applies pending EF Core migrations and seeds demo users on startup.
 
+Local development settings live in `appsettings.Development.json`.
+Base `appsettings.json` does not contain usable database/JWT secrets.
+You can override values with environment variables such as:
+
+- `ConnectionStrings__DefaultConnection`
+- `Jwt__Secret`
+- `Jwt__Issuer`
+- `Jwt__Audience`
+- `Jwt__ExpiryMinutes`
+
 API runs at `http://localhost:5067`.
 
 Swagger UI: `http://localhost:5067/swagger`
@@ -142,6 +152,7 @@ This project is built incrementally across 30 PRs.
 | PR-005  | Done   | API foundation                 |
 | PR-006  | Done   | Authentication backend         |
 | PR-007  | Done   | Authentication frontend        |
+| PR-007.5 | Done  | Foundation & authentication audit |
 | PR-008+ | —      | See project plan for details   |
 
 ## License

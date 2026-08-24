@@ -22,12 +22,18 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers)
+  const useAuth = options.auth !== false
 
   if (options.body !== undefined) {
     headers.set('Content-Type', 'application/json')
   }
 
-  if (options.auth !== false) {
+  if (useAuth) {
+    if (tokenStorage.isTokenExpired()) {
+      tokenStorage.clear()
+      throw new ApiError('Authentication is required.', 401)
+    }
+
     const token = tokenStorage.getToken()
     if (token) {
       headers.set('Authorization', `Bearer ${token}`)
@@ -49,6 +55,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok || !payload?.success) {
+    if (useAuth && response.status === 401) {
+      tokenStorage.clear()
+    }
+
     throw new ApiError(
       payload?.message ?? 'Request failed.',
       response.status,

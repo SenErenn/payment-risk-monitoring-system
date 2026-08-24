@@ -25,8 +25,17 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(tokenStorage.getUser())
-  const [token, setToken] = useState<string | null>(tokenStorage.getToken())
+  const [user, setUser] = useState<AuthUser | null>(() =>
+    tokenStorage.isTokenExpired() ? null : tokenStorage.getUser(),
+  )
+  const [token, setToken] = useState<string | null>(() => {
+    if (tokenStorage.isTokenExpired()) {
+      tokenStorage.clear()
+      return null
+    }
+
+    return tokenStorage.getToken()
+  })
   const [isBootstrapping, setIsBootstrapping] = useState(true)
 
   const logout = useCallback(() => {
@@ -47,6 +56,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
+      if (tokenStorage.isTokenExpired()) {
+        tokenStorage.clear()
+        if (!cancelled) {
+          setToken(null)
+          setUser(null)
+          setIsBootstrapping(false)
+        }
+        return
+      }
+
       try {
         const currentUser = await getCurrentUserRequest()
         if (!cancelled) {
@@ -62,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null)
           }
         }
+        // Network / 5xx: keep cached session if token is still unexpired.
       } finally {
         if (!cancelled) {
           setIsBootstrapping(false)
@@ -79,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const result = await loginRequest(email, password)
     tokenStorage.setToken(result.accessToken)
+    tokenStorage.setExpiresAtUtc(result.expiresAtUtc)
     tokenStorage.setUser(result.user)
     setToken(result.accessToken)
     setUser(result.user)

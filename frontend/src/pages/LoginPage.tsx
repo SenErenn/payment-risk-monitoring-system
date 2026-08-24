@@ -7,8 +7,8 @@ export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [email, setEmail] = useState('admin@payscope.local')
-  const [password, setPassword] = useState('Admin123!')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -79,12 +79,7 @@ export function LoginPage() {
         </form>
 
         <div className="login-hint">
-          <p>Development users:</p>
-          <ul>
-            <li>admin@payscope.local / Admin123!</li>
-            <li>analyst@payscope.local / Analyst123!</li>
-            <li>viewer@payscope.local / Viewer123!</li>
-          </ul>
+          <p>Development credentials are listed in the project README.</p>
         </div>
       </div>
     </div>

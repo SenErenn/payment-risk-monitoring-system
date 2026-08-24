@@ -1,7 +1,8 @@
+import type { AuthUser } from './types'
+
 const TOKEN_KEY = 'payscope_access_token'
 const USER_KEY = 'payscope_auth_user'
-
-import type { AuthUser } from './types'
+const EXPIRES_AT_KEY = 'payscope_token_expires_at'
 
 export const tokenStorage = {
   getToken(): string | null {
@@ -14,6 +15,32 @@ export const tokenStorage = {
 
   clearToken(): void {
     localStorage.removeItem(TOKEN_KEY)
+  },
+
+  getExpiresAtUtc(): string | null {
+    return localStorage.getItem(EXPIRES_AT_KEY)
+  },
+
+  setExpiresAtUtc(expiresAtUtc: string): void {
+    localStorage.setItem(EXPIRES_AT_KEY, expiresAtUtc)
+  },
+
+  clearExpiresAtUtc(): void {
+    localStorage.removeItem(EXPIRES_AT_KEY)
+  },
+
+  isTokenExpired(referenceDate: Date = new Date()): boolean {
+    const expiresAtUtc = this.getExpiresAtUtc()
+    if (!expiresAtUtc) {
+      return false
+    }
+
+    const expiresAt = Date.parse(expiresAtUtc)
+    if (Number.isNaN(expiresAt)) {
+      return true
+    }
+
+    return expiresAt <= referenceDate.getTime()
   },
 
   getUser(): AuthUser | null {
@@ -41,5 +68,6 @@ export const tokenStorage = {
   clear(): void {
     this.clearToken()
     this.clearUser()
+    this.clearExpiresAtUtc()
   },
 }
