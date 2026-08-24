@@ -142,6 +142,12 @@ Merchant API (PR-009):
 
 Merchant UI arrives in PR-010.
 
+### Merchants UI (PR-010)
+
+- Route: `/merchants` (list) and `/merchants/:id` (detail)
+- Roles: Admin (full), Viewer (read-only)
+- Features: search, status filter, pagination, create, edit, activate/deactivate
+
 ### PostgreSQL
 
 ```bash
@@ -185,7 +191,8 @@ This project is built incrementally across 30 PRs.
 | PR-007.5 | Done  | Foundation & authentication audit |
 | PR-008  | Done   | Main layout + role authorization |
 | PR-009  | Done   | Merchant backend CRUD            |
-| PR-010+ | —      | See project plan for details   |
+| PR-010  | Done   | Merchant frontend                |
+| PR-011+ | —      | See project plan for details   |
 
 ## License
 

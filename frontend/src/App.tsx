@@ -7,6 +7,8 @@ import { AppLayout } from './layouts/AppLayout'
 import { AccessDeniedPage } from './pages/AccessDeniedPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { MerchantDetailPage } from './pages/MerchantDetailPage'
+import { MerchantsPage } from './pages/MerchantsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import './App.css'
 
@@ -51,16 +53,8 @@ function App() {
               </Route>
 
               <Route element={<RoleRoute roles={['Admin', 'Viewer']} />}>
-                <Route
-                  path="/merchants"
-                  element={
-                    <PlaceholderPage
-                      title="Merchants"
-                      description="Browse merchant profiles used in payment simulation."
-                      comingIn="PR-010"
-                    />
-                  }
-                />
+                <Route path="/merchants" element={<MerchantsPage />} />
+                <Route path="/merchants/:id" element={<MerchantDetailPage />} />
               </Route>
 
               <Route element={<RoleRoute roles={['Admin']} />}>
@@ -70,7 +64,7 @@ function App() {
                     <PlaceholderPage
                       title="Cards"
                       description="Manage tokenized card records for simulation."
-                      comingIn="PR-010"
+                      comingIn="PR-011"
                     />
                   }
                 />
