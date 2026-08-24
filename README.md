@@ -18,10 +18,13 @@ UI brand name: **PayScope**
 payment-risk-monitoring-system/
 ├── backend/
 │   └── PaymentRiskMonitoring.Api/
+│       ├── Controllers/
+│       ├── Entities/
+│       └── Enums/
 ├── frontend/
 │   └── src/
 ├── PaymentRiskMonitoring.slnx
-├── docker-compose.yml          (from PR-002)
+├── docker-compose.yml
 ├── .env.example
 └── README.md
 ```
@@ -83,7 +86,8 @@ This project is built incrementally across 30 PRs.
 | ------- | ------ | ------------------------------ |
 | PR-001  | Done   | Project foundation             |
 | PR-002  | Done   | PostgreSQL + Docker infrastructure |
-| PR-003+ | —      | See project plan for details   |
+| PR-003  | Done   | Core domain models             |
+| PR-004+ | —      | See project plan for details   |
 
 ## License
 
