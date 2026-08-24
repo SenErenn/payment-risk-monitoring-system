@@ -1,11 +1,14 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using PaymentRiskMonitoring.Api.Data;
+using PaymentRiskMonitoring.Api.Entities;
 using PaymentRiskMonitoring.Api.Extensions;
 using PaymentRiskMonitoring.Api.Middleware;
+using PaymentRiskMonitoring.Api.Services;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,9 +29,13 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "Internal API for card payment simulation, monitoring, and risk analysis."
     });
+    options.AddJwtSwaggerSecurity();
 });
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services
     .AddHealthChecks()
     .AddNpgSql(
@@ -51,13 +58,15 @@ if (app.Environment.IsDevelopment())
 
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
         .CreateLogger("DatabaseSeeder");
-    await DatabaseSeeder.InitializeAsync(dbContext, logger);
+    await DatabaseSeeder.InitializeAsync(dbContext, passwordHasher, logger);
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
