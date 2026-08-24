@@ -65,7 +65,7 @@ public static class AuthenticationExtensions
                 };
             });
 
-        services.AddAuthorization();
+        services.AddApplicationAuthorization();
         return services;
     }
 

@@ -19,6 +19,7 @@ UI brand name: **PayScope**
 payment-risk-monitoring-system/
 ├── backend/
 │   └── PaymentRiskMonitoring.Api/
+│       ├── Authorization/
 │       ├── Controllers/
 │       ├── Data/
 │       ├── DTOs/
@@ -36,6 +37,7 @@ payment-risk-monitoring-system/
 │       ├── api/
 │       ├── auth/
 │       ├── layouts/
+│       ├── navigation/
 │       └── pages/
 ├── PaymentRiskMonitoring.slnx
 ├── docker-compose.yml
@@ -112,6 +114,22 @@ After login you are redirected to `/dashboard`.
 
 Protected routes require a valid JWT from the backend.
 
+Sidebar menu items depend on role:
+
+| Role | Visible sections |
+| ---- | ---------------- |
+| Admin | Dashboard, Transactions, Risk Alerts, Merchants, Cards, Risk Rules, Users, Audit Logs |
+| Analyst | Dashboard, Transactions, Risk Alerts |
+| Viewer | Dashboard, Transactions, Merchants |
+
+Unauthorized deep links redirect to `/access-denied`.
+
+Backend authorization policies:
+
+- `AdminOnly` — Admin
+- `AnalystOrAdmin` — Admin, Analyst
+- `StaffRead` — Admin, Analyst, Viewer
+
 ### PostgreSQL
 
 ```bash
@@ -153,7 +171,8 @@ This project is built incrementally across 30 PRs.
 | PR-006  | Done   | Authentication backend         |
 | PR-007  | Done   | Authentication frontend        |
 | PR-007.5 | Done  | Foundation & authentication audit |
-| PR-008+ | —      | See project plan for details   |
+| PR-008  | Done   | Main layout + role authorization |
+| PR-009+ | —      | See project plan for details   |
 
 ## License
 

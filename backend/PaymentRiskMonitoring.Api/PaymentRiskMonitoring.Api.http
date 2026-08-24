@@ -25,3 +25,21 @@ Content-Type: application/json
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer {{accessToken}}
 Accept: application/json
+
+###
+### Access profile
+GET {{baseUrl}}/api/auth/access
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Admin check
+GET {{baseUrl}}/api/auth/admin-check
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Analyst check
+GET {{baseUrl}}/api/auth/analyst-check
+Authorization: Bearer {{accessToken}}
+Accept: application/json
