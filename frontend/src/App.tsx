@@ -5,6 +5,8 @@ import { PublicOnlyRoute } from './auth/PublicOnlyRoute'
 import { RoleRoute } from './auth/RoleRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { AccessDeniedPage } from './pages/AccessDeniedPage'
+import { CardDetailPage } from './pages/CardDetailPage'
+import { CardsPage } from './pages/CardsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { MerchantDetailPage } from './pages/MerchantDetailPage'
@@ -33,7 +35,7 @@ function App() {
                     <PlaceholderPage
                       title="Transactions"
                       description="Review simulated payment transactions and statuses."
-                      comingIn="PR-011"
+                      comingIn="PR-013"
                     />
                   }
                 />
@@ -58,23 +60,15 @@ function App() {
               </Route>
 
               <Route element={<RoleRoute roles={['Admin']} />}>
-                <Route
-                  path="/cards"
-                  element={
-                    <PlaceholderPage
-                      title="Cards"
-                      description="Manage tokenized card records for simulation."
-                      comingIn="PR-012"
-                    />
-                  }
-                />
+                <Route path="/cards" element={<CardsPage />} />
+                <Route path="/cards/:id" element={<CardDetailPage />} />
                 <Route
                   path="/risk-rules"
                   element={
                     <PlaceholderPage
                       title="Risk Rules"
                       description="Configure rule thresholds for risk scoring."
-                      comingIn="PR-013"
+                      comingIn="a later PR"
                     />
                   }
                 />

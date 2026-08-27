@@ -447,9 +447,36 @@
   color: #047857;
 }
 
-.status-chip.inactive {
+.status-chip.inactive,
+.status-chip.blocked {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+.status-chip.passive {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.status-chip.expired {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.toolbar-cards {
+  grid-template-columns: 1fr 160px 140px auto;
+}
+
+.form-hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.mono-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
 }
 
 .pagination {
@@ -522,7 +549,8 @@
     grid-template-columns: 1fr;
   }
 
-  .toolbar {
+  .toolbar,
+  .toolbar-cards {
     grid-template-columns: 1fr;
   }
 
