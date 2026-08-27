@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -20,7 +21,11 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "DefaultConnection is not configured. Set ConnectionStrings:DefaultConnection via appsettings.Development.json or environment variables.");
 }
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.ConfigureApiBehavior();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -41,6 +46,7 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MerchantService>();
+builder.Services.AddScoped<CardService>();
 
 if (builder.Environment.IsDevelopment())
 {

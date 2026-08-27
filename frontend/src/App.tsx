@@ -64,7 +64,7 @@ function App() {
                     <PlaceholderPage
                       title="Cards"
                       description="Manage tokenized card records for simulation."
-                      comingIn="PR-011"
+                      comingIn="PR-012"
                     />
                   }
                 />

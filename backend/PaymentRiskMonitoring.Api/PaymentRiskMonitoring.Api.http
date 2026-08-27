@@ -1,6 +1,7 @@
 @baseUrl = http://localhost:5067
 @accessToken = replace_with_jwt_after_login
 @merchantId = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+@cardId = e1111111-1111-1111-1111-111111111111
 
 ### Health
 GET {{baseUrl}}/api/health
@@ -96,5 +97,76 @@ Accept: application/json
 ###
 ### Deactivate merchant
 POST {{baseUrl}}/api/merchants/{{merchantId}}/deactivate
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### List cards
+GET {{baseUrl}}/api/cards?page=1&pageSize=10
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Search cards
+GET {{baseUrl}}/api/cards?page=1&pageSize=10&search=4242&status=Active
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Card detail
+GET {{baseUrl}}/api/cards/{{cardId}}
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Create card
+POST {{baseUrl}}/api/cards
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "cardType": "Credit",
+  "creditLimit": 12000,
+  "availableLimit": 12000,
+  "lastFourDigits": "1234",
+  "status": "Active"
+}
+
+###
+### Update card limits
+PUT {{baseUrl}}/api/cards/{{cardId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "creditLimit": 15000,
+  "availableLimit": 11000
+}
+
+###
+### Update card status
+POST {{baseUrl}}/api/cards/{{cardId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "Blocked"
+}
+
+###
+### Activate card
+POST {{baseUrl}}/api/cards/{{cardId}}/activate
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Block card
+POST {{baseUrl}}/api/cards/{{cardId}}/block
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Deactivate card
+POST {{baseUrl}}/api/cards/{{cardId}}/deactivate
 Authorization: Bearer {{accessToken}}
 Accept: application/json
