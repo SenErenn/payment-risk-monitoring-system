@@ -157,7 +157,15 @@ Card API (PR-011):
 - `POST /api/cards/{id}/status` — set status (Admin)
 - `POST /api/cards/{id}/activate|block|deactivate` — status shortcuts (Admin)
 
-No real PAN/CVV is accepted or stored. Card UI arrives in PR-012.
+No real PAN/CVV is accepted or stored.
+
+### Cards UI (PR-012)
+
+- Route: `/cards` (list) and `/cards/:id` (detail)
+- Role: Admin only
+- Features: search, status/type filters, pagination, create demo card, change limits, activate/block/deactivate/expire
+- Detail page includes a placeholder section for future card transactions
+
 ### PostgreSQL
 
 ```bash
@@ -203,7 +211,8 @@ This project is built incrementally across 30 PRs.
 | PR-009  | Done   | Merchant backend CRUD            |
 | PR-010  | Done   | Merchant frontend                |
 | PR-011  | Done   | Card backend CRUD                |
-| PR-012+ | —      | See project plan for details   |
+| PR-012  | Done   | Card frontend                    |
+| PR-013+ | —      | See project plan for details   |
 
 ## License
 
