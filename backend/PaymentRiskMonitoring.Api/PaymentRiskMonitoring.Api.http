@@ -2,6 +2,7 @@
 @accessToken = replace_with_jwt_after_login
 @merchantId = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
 @cardId = e1111111-1111-1111-1111-111111111111
+@transactionId = f1111111-1111-1111-1111-111111111111
 
 ### Health
 GET {{baseUrl}}/api/health
@@ -170,3 +171,35 @@ Accept: application/json
 POST {{baseUrl}}/api/cards/{{cardId}}/deactivate
 Authorization: Bearer {{accessToken}}
 Accept: application/json
+
+###
+### List transactions
+GET {{baseUrl}}/api/transactions?page=1&pageSize=10
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Search transactions
+GET {{baseUrl}}/api/transactions?page=1&pageSize=10&search=TXN&status=Approved
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Transaction detail
+GET {{baseUrl}}/api/transactions/{{transactionId}}
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Create transaction (payment)
+POST {{baseUrl}}/api/transactions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "merchantId": "{{merchantId}}",
+  "cardId": "{{cardId}}",
+  "amount": 250.50,
+  "currency": "TRY",
+  "paymentType": "Contactless"
+}

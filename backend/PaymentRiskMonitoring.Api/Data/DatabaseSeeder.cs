@@ -18,6 +18,7 @@ public static class DatabaseSeeder
         await SeedUsersAsync(dbContext, passwordHasher, logger);
         await SeedMerchantsAsync(dbContext, logger);
         await SeedCardsAsync(dbContext, logger);
+        await SeedTransactionsAsync(dbContext, logger);
     }
 
     private static async Task SeedUsersAsync(
@@ -196,6 +197,65 @@ public static class DatabaseSeeder
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation("Seeded {CardCount} development cards.", cards.Count);
+    }
+
+    private static async Task SeedTransactionsAsync(AppDbContext dbContext, ILogger logger)
+    {
+        if (await dbContext.Transactions.AnyAsync())
+        {
+            logger.LogInformation("Transaction seed skipped because transactions already exist.");
+            return;
+        }
+
+        var merchantExists = await dbContext.Merchants.AnyAsync(merchant =>
+            merchant.Id == Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"));
+        var cardExists = await dbContext.Cards.AnyAsync(card =>
+            card.Id == Guid.Parse("e1111111-1111-1111-1111-111111111111"));
+
+        if (!merchantExists || !cardExists)
+        {
+            logger.LogInformation("Transaction seed skipped because required merchant/card seeds are missing.");
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+
+        var transactions = new List<Transaction>
+        {
+            new()
+            {
+                Id = Guid.Parse("f1111111-1111-1111-1111-111111111111"),
+                TransactionCode = "TXN_SEED_APPROVED_0001",
+                MerchantId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                CardId = Guid.Parse("e1111111-1111-1111-1111-111111111111"),
+                Amount = 185.75m,
+                Currency = "TRY",
+                Status = TransactionStatus.Approved,
+                PaymentType = PaymentType.Contactless,
+                RiskScore = 15,
+                RiskLevel = RiskLevel.Low,
+                CreatedAt = now.AddMinutes(-30)
+            },
+            new()
+            {
+                Id = Guid.Parse("f2222222-2222-2222-2222-222222222222"),
+                TransactionCode = "TXN_SEED_DECLINED_0002",
+                MerchantId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                CardId = Guid.Parse("e4444444-4444-4444-4444-444444444444"),
+                Amount = 500m,
+                Currency = "TRY",
+                Status = TransactionStatus.Declined,
+                PaymentType = PaymentType.Online,
+                RiskScore = 80,
+                RiskLevel = RiskLevel.High,
+                CreatedAt = now.AddMinutes(-10)
+            }
+        };
+
+        dbContext.Transactions.AddRange(transactions);
+        await dbContext.SaveChangesAsync();
+
+        logger.LogInformation("Seeded {TransactionCount} development transactions.", transactions.Count);
     }
 
     private static User CreateUser(

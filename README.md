@@ -166,6 +166,17 @@ No real PAN/CVV is accepted or stored.
 - Features: search, status/type filters, pagination, create demo card, change limits, activate/block/deactivate/expire
 - Detail page includes a placeholder section for future card transactions
 
+Transaction API (PR-013):
+
+- `GET /api/transactions` — list with pagination / search / status / merchantId / cardId filter (Admin, Analyst, Viewer)
+- `GET /api/transactions/{id}` — detail (Admin, Analyst, Viewer)
+- `POST /api/transactions` — create simulated payment (Admin, Analyst)
+- Validates merchant/card, generates `TransactionCode`, checks amount/currency
+- Basic decision: Approved or Declined (inactive merchant, non-active card, insufficient limit)
+- Approved payments reduce card available limit
+- Basic risk score/level placeholders only (full risk engine later)
+
+Payment Simulator UI arrives in PR-014.
 ### PostgreSQL
 
 ```bash
@@ -212,7 +223,8 @@ This project is built incrementally across 30 PRs.
 | PR-010  | Done   | Merchant frontend                |
 | PR-011  | Done   | Card backend CRUD                |
 | PR-012  | Done   | Card frontend                    |
-| PR-013+ | —      | See project plan for details   |
+| PR-013  | Done   | Payment transaction backend      |
+| PR-014+ | —      | See project plan for details   |
 
 ## License
 
