@@ -17,6 +17,7 @@ public static class DatabaseSeeder
 
         await SeedUsersAsync(dbContext, passwordHasher, logger);
         await SeedMerchantsAsync(dbContext, logger);
+        await SeedCardsAsync(dbContext, logger);
     }
 
     private static async Task SeedUsersAsync(
@@ -127,6 +128,74 @@ public static class DatabaseSeeder
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation("Seeded {MerchantCount} development merchants.", merchants.Count);
+    }
+
+    private static async Task SeedCardsAsync(AppDbContext dbContext, ILogger logger)
+    {
+        if (await dbContext.Cards.AnyAsync())
+        {
+            logger.LogInformation("Card seed skipped because cards already exist.");
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+
+        var cards = new List<Card>
+        {
+            new()
+            {
+                Id = Guid.Parse("e1111111-1111-1111-1111-111111111111"),
+                CardToken = "tok_demo_visa_active_01",
+                MaskedCardNumber = "**** **** **** 4242",
+                CardType = CardType.Credit,
+                Status = CardStatus.Active,
+                CreditLimit = 25000m,
+                AvailableLimit = 18750.50m,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new()
+            {
+                Id = Guid.Parse("e2222222-2222-2222-2222-222222222222"),
+                CardToken = "tok_demo_mastercard_active_02",
+                MaskedCardNumber = "**** **** **** 5510",
+                CardType = CardType.Credit,
+                Status = CardStatus.Active,
+                CreditLimit = 10000m,
+                AvailableLimit = 10000m,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new()
+            {
+                Id = Guid.Parse("e3333333-3333-3333-3333-333333333333"),
+                CardToken = "tok_demo_debit_passive_03",
+                MaskedCardNumber = "**** **** **** 1001",
+                CardType = CardType.Debit,
+                Status = CardStatus.Passive,
+                CreditLimit = 5000m,
+                AvailableLimit = 3200m,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new()
+            {
+                Id = Guid.Parse("e4444444-4444-4444-4444-444444444444"),
+                CardToken = "tok_demo_credit_blocked_04",
+                MaskedCardNumber = "**** **** **** 8888",
+                CardType = CardType.Credit,
+                Status = CardStatus.Blocked,
+                CreditLimit = 15000m,
+                AvailableLimit = 0m,
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        };
+
+        dbContext.Cards.AddRange(cards);
+        await dbContext.SaveChangesAsync();
+
+        logger.LogInformation("Seeded {CardCount} development cards.", cards.Count);
     }
 
     private static User CreateUser(

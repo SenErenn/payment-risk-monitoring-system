@@ -148,6 +148,16 @@ Merchant UI arrives in PR-010.
 - Roles: Admin (full), Viewer (read-only)
 - Features: search, status filter, pagination, create, edit, activate/deactivate
 
+Card API (PR-011):
+
+- `GET /api/cards` — list with pagination / search / status / type filter (Admin)
+- `GET /api/cards/{id}` — detail (Admin)
+- `POST /api/cards` — create demo card with fake token + masked number (Admin)
+- `PUT /api/cards/{id}` — update credit/available limits (Admin)
+- `POST /api/cards/{id}/status` — set status (Admin)
+- `POST /api/cards/{id}/activate|block|deactivate` — status shortcuts (Admin)
+
+No real PAN/CVV is accepted or stored. Card UI arrives in PR-012.
 ### PostgreSQL
 
 ```bash
@@ -192,7 +202,8 @@ This project is built incrementally across 30 PRs.
 | PR-008  | Done   | Main layout + role authorization |
 | PR-009  | Done   | Merchant backend CRUD            |
 | PR-010  | Done   | Merchant frontend                |
-| PR-011+ | —      | See project plan for details   |
+| PR-011  | Done   | Card backend CRUD                |
+| PR-012+ | —      | See project plan for details   |
 
 ## License
 
