@@ -47,6 +47,7 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MerchantService>();
 builder.Services.AddScoped<CardService>();
+builder.Services.AddScoped<TransactionService>();
 
 if (builder.Environment.IsDevelopment())
 {
