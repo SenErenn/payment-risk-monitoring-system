@@ -467,6 +467,85 @@
   grid-template-columns: 1fr 160px 140px auto;
 }
 
+.toolbar-transactions {
+  grid-template-columns: 1fr 180px auto;
+}
+
+.form-grid-simulator {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.decision-panel {
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+}
+
+.decision-panel.approved {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.decision-panel.declined {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.decision-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.decision-panel p {
+  margin: 0;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.filter-chip button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.muted-text {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.info-card .text-link {
+  display: inline-block;
+  margin-top: 0.55rem;
+}
+
 .form-hint {
   margin: 0;
   color: var(--text-secondary);
@@ -550,7 +629,9 @@
   }
 
   .toolbar,
-  .toolbar-cards {
+  .toolbar-cards,
+  .toolbar-transactions,
+  .form-grid-simulator {
     grid-template-columns: 1fr;
   }
 

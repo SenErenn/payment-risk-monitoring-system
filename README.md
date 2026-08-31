@@ -133,8 +133,8 @@ Backend authorization policies:
 
 Merchant API (PR-009):
 
-- `GET /api/merchants` — list with pagination / search / isActive filter (Admin, Viewer)
-- `GET /api/merchants/{id}` — detail (Admin, Viewer)
+- `GET /api/merchants` — list with pagination / search / isActive filter (Admin, Analyst, Viewer)
+- `GET /api/merchants/{id}` — detail (Admin, Analyst, Viewer)
 - `POST /api/merchants` — create (Admin)
 - `PUT /api/merchants/{id}` — update (Admin)
 - `POST /api/merchants/{id}/activate` — activate (Admin)
@@ -150,8 +150,8 @@ Merchant UI arrives in PR-010.
 
 Card API (PR-011):
 
-- `GET /api/cards` — list with pagination / search / status / type filter (Admin)
-- `GET /api/cards/{id}` — detail (Admin)
+- `GET /api/cards` — list with pagination / search / status / type filter (Admin, Analyst)
+- `GET /api/cards/{id}` — detail (Admin, Analyst)
 - `POST /api/cards` — create demo card with fake token + masked number (Admin)
 - `PUT /api/cards/{id}` — update credit/available limits (Admin)
 - `POST /api/cards/{id}/status` — set status (Admin)
@@ -177,6 +177,17 @@ Transaction API (PR-013):
 - Basic risk score/level placeholders only (full risk engine later)
 
 Payment Simulator UI arrives in PR-014.
+
+### Payment Simulator UI (PR-014)
+
+- Route: `/transactions` (list + simulator) and `/transactions/:id` (detail)
+- Roles: Admin / Analyst / Viewer can view; Admin / Analyst can simulate payments
+- Simulator fields: Merchant, Card, Amount, Currency, Payment Type → **Make Payment**
+- Shows Approved / Declined result with decision message and link to detail
+- List supports search, status filter, pagination, and merchant/card context filters
+- Analyst can read merchants/cards for dropdowns (manage endpoints remain Admin-only)
+- Card detail shows recent transactions for that card
+
 ### PostgreSQL
 
 ```bash
@@ -224,7 +235,8 @@ This project is built incrementally across 30 PRs.
 | PR-011  | Done   | Card backend CRUD                |
 | PR-012  | Done   | Card frontend                    |
 | PR-013  | Done   | Payment transaction backend      |
-| PR-014+ | —      | See project plan for details   |
+| PR-014  | Done   | Payment simulator frontend       |
+| PR-015+ | —      | See project plan for details   |
 
 ## License
 

@@ -10,7 +10,6 @@ namespace PaymentRiskMonitoring.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Policy = AuthorizationPolicies.AdminOnly)]
 public class CardsController : ControllerBase
 {
     private readonly CardService _cardService;
@@ -20,6 +19,7 @@ public class CardsController : ControllerBase
         _cardService = cardService;
     }
 
+    [Authorize(Policy = AuthorizationPolicies.AnalystOrAdmin)]
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<CardDto>>>> GetCards(
         [FromQuery] CardListQuery query,
@@ -29,6 +29,7 @@ public class CardsController : ControllerBase
         return Ok(ApiResponse<PagedResult<CardDto>>.Ok(result, "Cards retrieved."));
     }
 
+    [Authorize(Policy = AuthorizationPolicies.AnalystOrAdmin)]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApiResponse<CardDto>>> GetCardById(
         Guid id,
@@ -38,6 +39,7 @@ public class CardsController : ControllerBase
         return Ok(ApiResponse<CardDto>.Ok(card, "Card retrieved."));
     }
 
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<CardDto>>> CreateCard(
         [FromBody] CreateCardRequest request,
@@ -50,6 +52,7 @@ public class CardsController : ControllerBase
             ApiResponse<CardDto>.Ok(card, "Card created."));
     }
 
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<CardDto>>> UpdateCard(
         Guid id,
@@ -60,6 +63,7 @@ public class CardsController : ControllerBase
         return Ok(ApiResponse<CardDto>.Ok(card, "Card limits updated."));
     }
 
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     [HttpPost("{id:guid}/status")]
     public async Task<ActionResult<ApiResponse<CardDto>>> UpdateCardStatus(
         Guid id,
@@ -70,6 +74,7 @@ public class CardsController : ControllerBase
         return Ok(ApiResponse<CardDto>.Ok(card, "Card status updated."));
     }
 
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     [HttpPost("{id:guid}/activate")]
     public async Task<ActionResult<ApiResponse<CardDto>>> ActivateCard(
         Guid id,
@@ -79,6 +84,7 @@ public class CardsController : ControllerBase
         return Ok(ApiResponse<CardDto>.Ok(card, "Card activated."));
     }
 
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     [HttpPost("{id:guid}/block")]
     public async Task<ActionResult<ApiResponse<CardDto>>> BlockCard(
         Guid id,
@@ -88,6 +94,7 @@ public class CardsController : ControllerBase
         return Ok(ApiResponse<CardDto>.Ok(card, "Card blocked."));
     }
 
+    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
     [HttpPost("{id:guid}/deactivate")]
     public async Task<ActionResult<ApiResponse<CardDto>>> DeactivateCard(
         Guid id,

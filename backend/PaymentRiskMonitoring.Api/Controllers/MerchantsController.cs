@@ -18,7 +18,7 @@ public class MerchantsController : ControllerBase
         _merchantService = merchantService;
     }
 
-    [Authorize(Policy = AuthorizationPolicies.AdminOrViewer)]
+    [Authorize(Policy = AuthorizationPolicies.StaffRead)]
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<MerchantDto>>>> GetMerchants(
         [FromQuery] MerchantListQuery query,
@@ -28,7 +28,7 @@ public class MerchantsController : ControllerBase
         return Ok(ApiResponse<PagedResult<MerchantDto>>.Ok(result, "Merchants retrieved."));
     }
 
-    [Authorize(Policy = AuthorizationPolicies.AdminOrViewer)]
+    [Authorize(Policy = AuthorizationPolicies.StaffRead)]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApiResponse<MerchantDto>>> GetMerchantById(
         Guid id,
