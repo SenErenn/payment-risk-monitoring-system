@@ -38,13 +38,36 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(transaction => transaction.DecisionReason)
+            .HasMaxLength(500)
+            .IsRequired();
+
+        builder.Property(transaction => transaction.DeclineReason)
+            .HasMaxLength(500);
+
+        builder.Property(transaction => transaction.IdempotencyKey)
+            .HasMaxLength(100);
+
         builder.HasIndex(transaction => transaction.TransactionCode)
             .IsUnique();
+
+        builder.HasIndex(transaction => transaction.IdempotencyKey)
+            .IsUnique()
+            .HasFilter("\"IdempotencyKey\" IS NOT NULL");
 
         builder.HasIndex(transaction => transaction.CreatedAt);
         builder.HasIndex(transaction => transaction.MerchantId);
         builder.HasIndex(transaction => transaction.CardId);
         builder.HasIndex(transaction => transaction.Status);
         builder.HasIndex(transaction => transaction.RiskLevel);
+        builder.HasIndex(transaction => new
+        {
+            transaction.CardId,
+            transaction.MerchantId,
+            transaction.Amount,
+            transaction.Currency,
+            transaction.PaymentType,
+            transaction.CreatedAt
+        });
     }
 }

@@ -28,6 +28,9 @@ export interface Transaction {
   riskLevel: RiskLevel
   createdAt: string
   decisionMessage: string | null
+  declineReason: string | null
+  idempotencyKey: string | null
+  isReplay?: boolean
 }
 
 export interface PagedResult<T> {
@@ -55,4 +58,5 @@ export interface CreateTransactionPayload {
   amount: number
   currency: CurrencyCode
   paymentType: PaymentType
+  idempotencyKey?: string
 }

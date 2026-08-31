@@ -24,6 +24,21 @@ public class Transaction
 
     public RiskLevel RiskLevel { get; set; }
 
+    /// <summary>
+    /// Persisted approve/decline explanation shown on detail screens.
+    /// </summary>
+    public string DecisionReason { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Declined-only copy of <see cref="DecisionReason"/> for explicit decline reporting.
+    /// </summary>
+    public string? DeclineReason { get; set; }
+
+    /// <summary>
+    /// Client-supplied key to prevent duplicate payment processing.
+    /// </summary>
+    public string? IdempotencyKey { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public Merchant Merchant { get; set; } = null!;

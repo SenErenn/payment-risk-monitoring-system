@@ -188,6 +188,17 @@ Payment Simulator UI arrives in PR-014.
 - Analyst can read merchants/cards for dropdowns (manage endpoints remain Admin-only)
 - Card detail shows recent transactions for that card
 
+### Payment Processing Rules (PR-015)
+
+- Persists `DecisionReason` / `DeclineReason` on each transaction (detail screens stay accurate after reload)
+- Strengthened amount validation: > 0, ≤ 1,000,000, max 2 decimal places
+- Approved payments reduce available limit inside a DB transaction with card row lock (`FOR UPDATE`)
+- Declined payments never change available limit
+- Optional `idempotencyKey` (body or `Idempotency-Key` header): replay returns the original payment (`isReplay: true`, HTTP 200) without double-charging
+- Same merchant/card/amount/currency/paymentType within 30 seconds without a key is treated as a duplicate replay
+- Mismatched payload for an existing idempotency key → HTTP 409
+- Simulator sends a fresh UUID idempotency key per click
+
 ### PostgreSQL
 
 ```bash
@@ -236,7 +247,8 @@ This project is built incrementally across 30 PRs.
 | PR-012  | Done   | Card frontend                    |
 | PR-013  | Done   | Payment transaction backend      |
 | PR-014  | Done   | Payment simulator frontend       |
-| PR-015+ | —      | See project plan for details   |
+| PR-015  | Done   | Payment processing rules         |
+| PR-016+ | —      | See project plan for details   |
 
 ## License
 

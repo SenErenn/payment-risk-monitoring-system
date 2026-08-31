@@ -115,9 +115,13 @@ export function TransactionDetailPage() {
           </span>
         </div>
         <p>
-          {transaction.decisionMessage ??
+          {transaction.declineReason ??
+            transaction.decisionMessage ??
             'No decision message was recorded for this transaction.'}
         </p>
+        {transaction.status === 'Declined' && transaction.declineReason ? (
+          <p className="form-hint">Decline reason is persisted with the transaction.</p>
+        ) : null}
       </div>
 
       <div className="info-grid">

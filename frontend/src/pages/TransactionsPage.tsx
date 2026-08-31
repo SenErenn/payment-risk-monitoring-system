@@ -258,11 +258,12 @@ export function TransactionsPage() {
         amount: parsedAmount,
         currency,
         paymentType,
+        idempotencyKey: crypto.randomUUID(),
       })
       setLastResult(transaction)
       setReloadToken((value) => value + 1)
 
-      if (canCreate) {
+      if (canCreate && !transaction.isReplay) {
         const refreshedCards = await listCards({ page: 1, pageSize: 100 })
         setCards(refreshedCards.items)
       }
@@ -298,6 +299,8 @@ export function TransactionsPage() {
           <p className="form-hint">
             Choose a merchant and card, then submit a demo payment. Inactive
             merchants, non-active cards, and insufficient limits are declined.
+            Duplicate clicks within 30 seconds (or the same idempotency key) reuse
+            the original payment without charging again.
           </p>
 
           {optionsLoading ? (
@@ -409,11 +412,15 @@ export function TransactionsPage() {
           {lastResult ? (
             <div className={decisionPanelClass(lastResult.status)}>
               <div className="decision-panel-header">
-                <strong>{lastResult.status}</strong>
+                <strong>
+                  {lastResult.status}
+                  {lastResult.isReplay ? ' (replay)' : ''}
+                </strong>
                 <span className="mono-text">{lastResult.transactionCode}</span>
               </div>
               <p>
-                {lastResult.decisionMessage ??
+                {lastResult.declineReason ??
+                  lastResult.decisionMessage ??
                   `${formatAmount(lastResult.amount, lastResult.currency)} · ${lastResult.paymentType}`}
               </p>
               <p className="form-hint">
