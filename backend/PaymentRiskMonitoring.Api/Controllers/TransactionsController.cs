@@ -42,12 +42,28 @@ public class TransactionsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ApiResponse<TransactionDto>>> CreateTransaction(
         [FromBody] CreateTransactionRequest request,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKeyHeader,
         CancellationToken cancellationToken)
     {
-        var transaction = await _transactionService.CreateTransactionAsync(request, cancellationToken);
+        var result = await _transactionService.CreateTransactionAsync(
+            request,
+            idempotencyKeyHeader,
+            cancellationToken);
+
+        var message = result.WasCreated
+            ? result.Transaction.DecisionMessage ?? "Transaction created."
+            : "Existing payment returned for duplicate or idempotent request.";
+
+        var payload = ApiResponse<TransactionDto>.Ok(result.Transaction, message);
+
+        if (!result.WasCreated)
+        {
+            return Ok(payload);
+        }
+
         return CreatedAtAction(
             nameof(GetTransactionById),
-            new { id = transaction.Id },
-            ApiResponse<TransactionDto>.Ok(transaction, transaction.DecisionMessage ?? "Transaction created."));
+            new { id = result.Transaction.Id },
+            payload);
     }
 }

@@ -35,4 +35,10 @@ public class TransactionDto
     public DateTime CreatedAt { get; init; }
 
     public string? DecisionMessage { get; init; }
+
+    public string? DeclineReason { get; init; }
+
+    public string? IdempotencyKey { get; init; }
+
+    public bool IsReplay { get; init; }
 }

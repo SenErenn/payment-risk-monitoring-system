@@ -13,4 +13,10 @@ public class CreateTransactionRequest
     public string Currency { get; set; } = "TRY";
 
     public PaymentType PaymentType { get; set; }
+
+    /// <summary>
+    /// Optional client key. Replaying the same key returns the original transaction
+    /// without charging the card again. Can also be sent via Idempotency-Key header.
+    /// </summary>
+    public string? IdempotencyKey { get; set; }
 }

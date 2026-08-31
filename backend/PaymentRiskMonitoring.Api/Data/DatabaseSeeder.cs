@@ -234,6 +234,8 @@ public static class DatabaseSeeder
                 PaymentType = PaymentType.Contactless,
                 RiskScore = 15,
                 RiskLevel = RiskLevel.Low,
+                DecisionReason = "Approved.",
+                DeclineReason = null,
                 CreatedAt = now.AddMinutes(-30)
             },
             new()
@@ -248,6 +250,8 @@ public static class DatabaseSeeder
                 PaymentType = PaymentType.Online,
                 RiskScore = 80,
                 RiskLevel = RiskLevel.High,
+                DecisionReason = "Declined: card status is Blocked.",
+                DeclineReason = "Declined: card status is Blocked.",
                 CreatedAt = now.AddMinutes(-10)
             }
         };
