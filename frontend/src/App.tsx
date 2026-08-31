@@ -12,6 +12,8 @@ import { LoginPage } from './pages/LoginPage'
 import { MerchantDetailPage } from './pages/MerchantDetailPage'
 import { MerchantsPage } from './pages/MerchantsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { TransactionDetailPage } from './pages/TransactionDetailPage'
+import { TransactionsPage } from './pages/TransactionsPage'
 import './App.css'
 
 function App() {
@@ -29,16 +31,8 @@ function App() {
               <Route path="/access-denied" element={<AccessDeniedPage />} />
 
               <Route element={<RoleRoute roles={['Admin', 'Analyst', 'Viewer']} />}>
-                <Route
-                  path="/transactions"
-                  element={
-                    <PlaceholderPage
-                      title="Transactions"
-                      description="Review simulated payment transactions and statuses."
-                      comingIn="PR-014"
-                    />
-                  }
-                />
+                <Route path="/transactions" element={<TransactionsPage />} />
+                <Route path="/transactions/:id" element={<TransactionDetailPage />} />
               </Route>
 
               <Route element={<RoleRoute roles={['Admin', 'Analyst']} />}>
@@ -48,7 +42,7 @@ function App() {
                     <PlaceholderPage
                       title="Risk Alerts"
                       description="Investigate flagged transactions and risk signals."
-                      comingIn="PR-014"
+                      comingIn="a later PR"
                     />
                   }
                 />

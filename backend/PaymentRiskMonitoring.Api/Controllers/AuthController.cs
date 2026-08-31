@@ -69,12 +69,12 @@ public class AuthController : ControllerBase
             canManageUsers = role == AppRoles.Admin,
             canManageRiskRules = role == AppRoles.Admin,
             canManageCards = role == AppRoles.Admin,
-            canViewCards = role == AppRoles.Admin,
+            canViewCards = role is AppRoles.Admin or AppRoles.Analyst,
             canManageMerchants = role == AppRoles.Admin,
             canReviewRiskAlerts = role is AppRoles.Admin or AppRoles.Analyst,
             canCreateTransactions = role is AppRoles.Admin or AppRoles.Analyst,
             canViewTransactions = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
-            canViewMerchants = role is AppRoles.Admin or AppRoles.Viewer,
+            canViewMerchants = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
             checkedAtUtc = DateTime.UtcNow
         };
 

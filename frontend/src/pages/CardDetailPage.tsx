@@ -10,7 +10,14 @@ import {
   updateCardStatus,
 } from '../api/cards'
 import type { Card } from '../api/cardTypes'
+import { listTransactions } from '../api/transactions'
+import type { Transaction } from '../api/transactionTypes'
 import { cardStatusClass, formatDateTime, formatMoney } from './cardUi'
+import {
+  formatAmount,
+  formatDateTime as formatTxDateTime,
+  transactionStatusClass,
+} from './transactionUi'
 
 export function CardDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -25,6 +32,12 @@ export function CardDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
+    [],
+  )
+  const [transactionsError, setTransactionsError] = useState<string | null>(
+    null,
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -60,7 +73,36 @@ export function CardDetailPage() {
       }
     }
 
+    async function loadTransactions() {
+      if (!id) {
+        return
+      }
+
+      setTransactionsError(null)
+
+      try {
+        const txPage = await listTransactions({
+          page: 1,
+          pageSize: 5,
+          cardId: id,
+        })
+        if (!cancelled) {
+          setRecentTransactions(txPage.items)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setRecentTransactions([])
+          setTransactionsError(
+            err instanceof ApiError
+              ? err.message
+              : 'Unable to load card transactions.',
+          )
+        }
+      }
+    }
+
     void load()
+    void loadTransactions()
 
     return () => {
       cancelled = true
@@ -309,11 +351,62 @@ export function CardDetailPage() {
       ) : null}
 
       <div className="notice-card">
-        <h2>Card transactions</h2>
-        <p>
-          Transaction history for this card will appear here after the payment
-          module is implemented in later PRs.
-        </p>
+        <h2>Recent transactions</h2>
+        {transactionsError ? (
+          <div className="form-error">{transactionsError}</div>
+        ) : null}
+        {recentTransactions.length === 0 ? (
+          <p>
+            No transactions yet for this card.{' '}
+            <Link className="text-link" to="/transactions">
+              Open Payment Simulator
+            </Link>
+          </p>
+        ) : (
+          <>
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentTransactions.map((tx) => (
+                    <tr key={tx.id}>
+                      <td>
+                        <Link
+                          className="text-link mono-text"
+                          to={`/transactions/${tx.id}`}
+                        >
+                          {tx.transactionCode}
+                        </Link>
+                      </td>
+                      <td>{formatAmount(tx.amount, tx.currency)}</td>
+                      <td>
+                        <span className={transactionStatusClass(tx.status)}>
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td>{formatTxDateTime(tx.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="form-hint">
+              <Link
+                className="text-link"
+                to={`/transactions?cardId=${card.id}`}
+              >
+                View all transactions for this card
+              </Link>
+            </p>
+          </>
+        )}
       </div>
 
       <div className="info-card">
