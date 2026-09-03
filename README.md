@@ -210,6 +210,15 @@ Payment Simulator UI arrives in PR-014.
 - Existing pagination and detail endpoint unchanged
 - Transaction list UI filter controls arrive in PR-017
 
+### Transaction Frontend (PR-017)
+
+- Route: `/transactions` filter panel + table, `/transactions/:id` detail
+- Filters (URL-synced): search, status, payment type, merchant, card, amount range, created from/to, sort by/direction
+- Status / risk badges on list and detail
+- Merchant and card related-transaction links from list rows and detail
+- Viewer can filter; Admin/Analyst also simulate payments
+- Uses PR-016 query API (no new backend endpoints)
+
 ### PostgreSQL
 
 ```bash
@@ -260,7 +269,8 @@ This project is built incrementally across 30 PRs.
 | PR-014  | Done   | Payment simulator frontend       |
 | PR-015  | Done   | Payment processing rules         |
 | PR-016  | Done   | Transaction query backend        |
-| PR-017+ | —      | See project plan for details   |
+| PR-017  | Done   | Transaction frontend filters     |
+| PR-018+ | —      | See project plan for details   |
 
 ## License
 

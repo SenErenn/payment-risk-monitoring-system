@@ -475,6 +475,28 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.form-grid-filters {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.filter-panel h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.filter-panel .page-header-row,
+.filter-panel-header {
+  margin-bottom: 0.25rem;
+}
+
+.detail-links {
+  margin-top: 0.55rem;
+}
+
+.detail-links .text-link {
+  margin-top: 0;
+}
+
 .decision-panel {
   border-radius: 10px;
   padding: 1rem 1.1rem;
@@ -631,7 +653,8 @@
   .toolbar,
   .toolbar-cards,
   .toolbar-transactions,
-  .form-grid-simulator {
+  .form-grid-simulator,
+  .form-grid-filters {
     grid-template-columns: 1fr;
   }
 

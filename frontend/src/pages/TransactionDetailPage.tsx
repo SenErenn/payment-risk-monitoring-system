@@ -16,7 +16,7 @@ export function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { hasRole } = useAuth()
   const canManageCards = hasRole('Admin')
-  const canViewMerchants = hasRole('Admin', 'Viewer')
+  const canOpenMerchants = hasRole('Admin', 'Viewer')
 
   const [transaction, setTransaction] = useState<Transaction | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -120,7 +120,9 @@ export function TransactionDetailPage() {
             'No decision message was recorded for this transaction.'}
         </p>
         {transaction.status === 'Declined' && transaction.declineReason ? (
-          <p className="form-hint">Decline reason is persisted with the transaction.</p>
+          <p className="form-hint">
+            Decline reason is persisted with the transaction.
+          </p>
         ) : null}
       </div>
 
@@ -129,38 +131,42 @@ export function TransactionDetailPage() {
           <span className="info-label">Merchant</span>
           <strong>{transaction.merchantName}</strong>
           <span className="muted-text">{transaction.merchantCode}</span>
-          {canViewMerchants ? (
-            <Link
-              className="text-link"
-              to={`/merchants/${transaction.merchantId}`}
-            >
-              Open merchant
-            </Link>
-          ) : (
+          <span className="muted-text mono-text">{transaction.merchantId}</span>
+          <div className="action-row detail-links">
+            {canOpenMerchants ? (
+              <Link
+                className="text-link"
+                to={`/merchants/${transaction.merchantId}`}
+              >
+                Open merchant
+              </Link>
+            ) : null}
             <Link
               className="text-link"
               to={`/transactions?merchantId=${transaction.merchantId}`}
             >
-              Filter by merchant
+              Related transactions
             </Link>
-          )}
+          </div>
         </div>
         <div className="info-card">
           <span className="info-label">Card</span>
           <strong className="mono-text">{transaction.maskedCardNumber}</strong>
           <span className="muted-text mono-text">{transaction.cardToken}</span>
-          {canManageCards ? (
-            <Link className="text-link" to={`/cards/${transaction.cardId}`}>
-              Open card
-            </Link>
-          ) : (
+          <span className="muted-text mono-text">{transaction.cardId}</span>
+          <div className="action-row detail-links">
+            {canManageCards ? (
+              <Link className="text-link" to={`/cards/${transaction.cardId}`}>
+                Open card
+              </Link>
+            ) : null}
             <Link
               className="text-link"
               to={`/transactions?cardId=${transaction.cardId}`}
             >
-              Filter by card
+              Related transactions
             </Link>
-          )}
+          </div>
         </div>
         <div className="info-card">
           <span className="info-label">Created</span>
@@ -181,7 +187,11 @@ export function TransactionDetailPage() {
         </div>
         <div className="info-card">
           <span className="info-label">Status</span>
-          <strong>{transaction.status}</strong>
+          <strong>
+            <span className={transactionStatusClass(transaction.status)}>
+              {transaction.status}
+            </span>
+          </strong>
         </div>
       </div>
     </div>
