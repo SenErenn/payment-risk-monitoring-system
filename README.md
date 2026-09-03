@@ -166,9 +166,11 @@ No real PAN/CVV is accepted or stored.
 - Features: search, status/type filters, pagination, create demo card, change limits, activate/block/deactivate/expire
 - Detail page includes a placeholder section for future card transactions
 
-Transaction API (PR-013):
+Transaction API (PR-013 / PR-016):
 
-- `GET /api/transactions` — list with pagination / search / status / merchantId / cardId filter (Admin, Analyst, Viewer)
+- `GET /api/transactions` — list with pagination, search, filters, and sorting (Admin, Analyst, Viewer)
+  - Filters: status, merchantId, cardId, paymentType, createdFrom, createdTo, minAmount, maxAmount
+  - Sort: sortBy + sortDirection (default createdAt desc)
 - `GET /api/transactions/{id}` — detail (Admin, Analyst, Viewer)
 - `POST /api/transactions` — create simulated payment (Admin, Analyst)
 - Validates merchant/card, generates `TransactionCode`, checks amount/currency
@@ -198,6 +200,15 @@ Payment Simulator UI arrives in PR-014.
 - Same merchant/card/amount/currency/paymentType within 30 seconds without a key is treated as a duplicate replay
 - Mismatched payload for an existing idempotency key → HTTP 409
 - Simulator sends a fresh UUID idempotency key per click
+
+### Transaction Query Backend (PR-016)
+
+- `GET /api/transactions` supports richer filtering and sorting (Admin, Analyst, Viewer)
+- Filters: `search`, `status`, `merchantId`, `cardId`, `paymentType`, `createdFrom`, `createdTo`, `minAmount`, `maxAmount`
+- Sorting: `sortBy` (`createdAt` | `amount` | `status` | `riskScore` | `riskLevel` | `transactionCode` | `paymentType`) + `sortDirection` (`asc` | `desc`)
+- Default sort remains `createdAt desc`
+- Existing pagination and detail endpoint unchanged
+- Transaction list UI filter controls arrive in PR-017
 
 ### PostgreSQL
 
@@ -248,7 +259,8 @@ This project is built incrementally across 30 PRs.
 | PR-013  | Done   | Payment transaction backend      |
 | PR-014  | Done   | Payment simulator frontend       |
 | PR-015  | Done   | Payment processing rules         |
-| PR-016+ | —      | See project plan for details   |
+| PR-016  | Done   | Transaction query backend        |
+| PR-017+ | —      | See project plan for details   |
 
 ## License
 

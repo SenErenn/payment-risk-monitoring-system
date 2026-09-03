@@ -43,6 +43,17 @@ export interface PagedResult<T> {
   hasPreviousPage: boolean
 }
 
+export type TransactionSortBy =
+  | 'createdAt'
+  | 'amount'
+  | 'status'
+  | 'riskScore'
+  | 'riskLevel'
+  | 'transactionCode'
+  | 'paymentType'
+
+export type SortDirection = 'asc' | 'desc'
+
 export interface TransactionListParams {
   page?: number
   pageSize?: number
@@ -50,6 +61,13 @@ export interface TransactionListParams {
   status?: TransactionStatus | null
   merchantId?: string | null
   cardId?: string | null
+  paymentType?: PaymentType | null
+  createdFrom?: string | null
+  createdTo?: string | null
+  minAmount?: number | null
+  maxAmount?: number | null
+  sortBy?: TransactionSortBy
+  sortDirection?: SortDirection
 }
 
 export interface CreateTransactionPayload {

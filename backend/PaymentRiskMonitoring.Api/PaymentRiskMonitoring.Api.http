@@ -185,6 +185,18 @@ Authorization: Bearer {{accessToken}}
 Accept: application/json
 
 ###
+### Filter transactions (date / amount / payment type / sort)
+GET {{baseUrl}}/api/transactions?page=1&pageSize=10&status=Approved&paymentType=Contactless&minAmount=10&maxAmount=1000&createdFrom=2026-01-01T00:00:00Z&createdTo=2026-12-31T23:59:59Z&sortBy=amount&sortDirection=desc
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Filter by merchant and card
+GET {{baseUrl}}/api/transactions?page=1&pageSize=10&merchantId={{merchantId}}&cardId={{cardId}}&sortBy=createdAt&sortDirection=desc
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
 ### Transaction detail
 GET {{baseUrl}}/api/transactions/{{transactionId}}
 Authorization: Bearer {{accessToken}}
