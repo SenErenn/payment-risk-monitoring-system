@@ -1,14 +1,16 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useT } from '../i18n'
 import { useAuth } from './AuthContext'
 
 export function ProtectedRoute() {
   const { isAuthenticated, isBootstrapping } = useAuth()
   const location = useLocation()
+  const t = useT()
 
   if (isBootstrapping) {
     return (
       <div className="boot-screen">
-        <p>Loading session...</p>
+        <p>{t('common.loading')}</p>
       </div>
     )
   }

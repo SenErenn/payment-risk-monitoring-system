@@ -12,6 +12,7 @@ import {
 import type { Card } from '../api/cardTypes'
 import { listTransactions } from '../api/transactions'
 import type { Transaction } from '../api/transactionTypes'
+import { useLocale, useT } from '../i18n'
 import { cardStatusClass, formatDateTime, formatMoney } from './cardUi'
 import {
   formatAmount,
@@ -22,6 +23,9 @@ import {
 export function CardDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const t = useT()
+  const { locale } = useLocale()
+  const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-US'
 
   const [card, setCard] = useState<Card | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -44,7 +48,7 @@ export function CardDetailPage() {
 
     async function load() {
       if (!id) {
-        setError('Card id is missing.')
+        setError(t('cards.missingId'))
         setIsLoading(false)
         return
       }
@@ -63,7 +67,9 @@ export function CardDetailPage() {
         if (!cancelled) {
           setCard(null)
           setError(
-            err instanceof ApiError ? err.message : 'Unable to load card.',
+            err instanceof ApiError
+              ? err.message
+              : t('cards.loadDetailFailed'),
           )
         }
       } finally {
@@ -95,7 +101,7 @@ export function CardDetailPage() {
           setTransactionsError(
             err instanceof ApiError
               ? err.message
-              : 'Unable to load card transactions.',
+              : t('cards.loadTxFailed'),
           )
         }
       }
@@ -107,7 +113,7 @@ export function CardDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, t])
 
   async function handleSaveLimits(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -119,7 +125,7 @@ export function CardDetailPage() {
     const available = Number(availableLimit)
 
     if (Number.isNaN(credit) || Number.isNaN(available)) {
-      setActionError('Credit and available limits must be valid numbers.')
+      setActionError(t('cards.invalidLimits'))
       return
     }
 
@@ -138,7 +144,7 @@ export function CardDetailPage() {
         const details = err.errors.length > 0 ? ` ${err.errors.join(' ')}` : ''
         setActionError(`${err.message}${details}`)
       } else {
-        setActionError('Unable to update card limits.')
+        setActionError(t('cards.updateLimitsFailed'))
       }
     } finally {
       setIsSaving(false)
@@ -174,7 +180,7 @@ export function CardDetailPage() {
       if (err instanceof ApiError) {
         setActionError(err.message)
       } else {
-        setActionError('Unable to update card status.')
+        setActionError(t('cards.statusUpdateFailed'))
       }
     } finally {
       setIsUpdatingStatus(false)
@@ -185,7 +191,7 @@ export function CardDetailPage() {
     return (
       <div className="page">
         <div className="notice-card">
-          <p>Loading card...</p>
+          <p>{t('cards.loadingDetail')}</p>
         </div>
       </div>
     )
@@ -196,12 +202,12 @@ export function CardDetailPage() {
       <div className="page">
         <div className="page-header">
           <div>
-            <h1>Card detail</h1>
-            <p>{error ?? 'Card not found.'}</p>
+            <h1>{t('cards.detailTitle')}</h1>
+            <p>{error ?? t('cards.notFound')}</p>
           </div>
         </div>
         <Link className="text-link" to="/cards">
-          Back to cards
+          {t('cards.detailBack')}
         </Link>
       </div>
     )
@@ -213,12 +219,12 @@ export function CardDetailPage() {
         <div>
           <p className="breadcrumb">
             <Link className="text-link" to="/cards">
-              Cards
+              {t('cards.title')}
             </Link>
             <span> / {card.maskedCardNumber}</span>
           </p>
           <h1>{card.maskedCardNumber}</h1>
-          <p>Demo card used in payment simulation.</p>
+          <p>{t('cards.detailSubtitle')}</p>
         </div>
         <div className="action-row">
           <button
@@ -231,14 +237,16 @@ export function CardDetailPage() {
               setAvailableLimit(String(card.availableLimit))
             }}
           >
-            {isEditingLimits ? 'Cancel edit' : 'Change limits'}
+            {isEditingLimits
+              ? t('cards.cancelEdit')
+              : t('cards.changeLimits')}
           </button>
           <button
             type="button"
             className="secondary-button"
             onClick={() => navigate('/cards')}
           >
-            Back
+            {t('common.back')}
           </button>
         </div>
       </div>
@@ -247,38 +255,40 @@ export function CardDetailPage() {
 
       <div className="info-grid">
         <div className="info-card">
-          <span className="info-label">Token</span>
+          <span className="info-label">{t('cards.token')}</span>
           <strong className="mono-text">{card.cardToken}</strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Type</span>
-          <strong>{card.cardType}</strong>
+          <span className="info-label">{t('cards.colType')}</span>
+          <strong>{t(`status.${card.cardType}`)}</strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Status</span>
+          <span className="info-label">{t('common.status')}</span>
           <strong>
-            <span className={cardStatusClass(card.status)}>{card.status}</span>
+            <span className={cardStatusClass(card.status)}>
+              {t(`status.${card.status}`)}
+            </span>
           </strong>
         </div>
       </div>
 
       <div className="info-grid">
         <div className="info-card">
-          <span className="info-label">Credit limit</span>
+          <span className="info-label">{t('cards.creditLimit')}</span>
           <strong>{formatMoney(card.creditLimit)}</strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Available limit</span>
+          <span className="info-label">{t('cards.availableLimit')}</span>
           <strong>{formatMoney(card.availableLimit)}</strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Updated</span>
-          <strong>{formatDateTime(card.updatedAt)}</strong>
+          <span className="info-label">{t('common.updated')}</span>
+          <strong>{formatDateTime(card.updatedAt, dateLocale)}</strong>
         </div>
       </div>
 
       <div className="panel-form">
-        <h2>Status actions</h2>
+        <h2>{t('cards.statusActions')}</h2>
         <div className="action-row">
           <button
             type="button"
@@ -286,7 +296,7 @@ export function CardDetailPage() {
             disabled={isUpdatingStatus || card.status === 'Active'}
             onClick={() => void handleStatusAction('activate')}
           >
-            Activate
+            {t('cards.activate')}
           </button>
           <button
             type="button"
@@ -294,7 +304,7 @@ export function CardDetailPage() {
             disabled={isUpdatingStatus || card.status === 'Blocked'}
             onClick={() => void handleStatusAction('block')}
           >
-            Block
+            {t('cards.block')}
           </button>
           <button
             type="button"
@@ -302,7 +312,7 @@ export function CardDetailPage() {
             disabled={isUpdatingStatus || card.status === 'Passive'}
             onClick={() => void handleStatusAction('deactivate')}
           >
-            Deactivate
+            {t('cards.deactivate')}
           </button>
           <button
             type="button"
@@ -310,17 +320,17 @@ export function CardDetailPage() {
             disabled={isUpdatingStatus || card.status === 'Expired'}
             onClick={() => void handleStatusAction('expire')}
           >
-            Mark expired
+            {t('cards.markExpired')}
           </button>
         </div>
       </div>
 
       {isEditingLimits ? (
         <form className="panel-form" onSubmit={handleSaveLimits}>
-          <h2>Change limits</h2>
+          <h2>{t('cards.changeLimits')}</h2>
           <div className="form-grid">
             <label htmlFor="editCreditLimit">
-              Credit limit
+              {t('cards.creditLimit')}
               <input
                 id="editCreditLimit"
                 type="number"
@@ -332,7 +342,7 @@ export function CardDetailPage() {
               />
             </label>
             <label htmlFor="editAvailableLimit">
-              Available limit
+              {t('cards.availableLimit')}
               <input
                 id="editAvailableLimit"
                 type="number"
@@ -345,21 +355,21 @@ export function CardDetailPage() {
             </label>
           </div>
           <button type="submit" className="primary-button" disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save limits'}
+            {isSaving ? t('cards.saving') : t('cards.saveLimits')}
           </button>
         </form>
       ) : null}
 
       <div className="notice-card">
-        <h2>Recent transactions</h2>
+        <h2>{t('cards.recentTitle')}</h2>
         {transactionsError ? (
           <div className="form-error">{transactionsError}</div>
         ) : null}
         {recentTransactions.length === 0 ? (
           <p>
-            No transactions yet for this card.{' '}
+            {t('cards.noTx')}{' '}
             <Link className="text-link" to="/transactions">
-              Open Payment Simulator
+              {t('cards.openSimulator')}
             </Link>
           </p>
         ) : (
@@ -368,10 +378,10 @@ export function CardDetailPage() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Code</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Created</th>
+                    <th>{t('transactions.colCode')}</th>
+                    <th>{t('transactions.colAmount')}</th>
+                    <th>{t('transactions.colStatus')}</th>
+                    <th>{t('transactions.colCreated')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -388,10 +398,10 @@ export function CardDetailPage() {
                       <td>{formatAmount(tx.amount, tx.currency)}</td>
                       <td>
                         <span className={transactionStatusClass(tx.status)}>
-                          {tx.status}
+                          {t(`status.${tx.status}`)}
                         </span>
                       </td>
-                      <td>{formatTxDateTime(tx.createdAt)}</td>
+                      <td>{formatTxDateTime(tx.createdAt, dateLocale)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -402,7 +412,7 @@ export function CardDetailPage() {
                 className="text-link"
                 to={`/transactions?cardId=${card.id}`}
               >
-                View all transactions for this card
+                {t('cards.viewAllTx')}
               </Link>
             </p>
           </>
@@ -410,8 +420,8 @@ export function CardDetailPage() {
       </div>
 
       <div className="info-card">
-        <span className="info-label">Created</span>
-        <strong>{formatDateTime(card.createdAt)}</strong>
+        <span className="info-label">{t('common.created')}</span>
+        <strong>{formatDateTime(card.createdAt, dateLocale)}</strong>
       </div>
     </div>
   )

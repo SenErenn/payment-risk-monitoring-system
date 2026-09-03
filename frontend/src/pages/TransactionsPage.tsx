@@ -16,6 +16,7 @@ import type {
   TransactionStatus,
 } from '../api/transactionTypes'
 import { useAuth } from '../auth/AuthContext'
+import { useLocale, useT } from '../i18n'
 import {
   decisionPanelClass,
   formatAmount,
@@ -36,15 +37,25 @@ const PAYMENT_TYPES: PaymentType[] = [
 
 const CURRENCIES: CurrencyCode[] = ['TRY', 'USD', 'EUR']
 
-const SORT_OPTIONS: { value: TransactionSortBy; label: string }[] = [
-  { value: 'createdAt', label: 'Created' },
-  { value: 'amount', label: 'Amount' },
-  { value: 'status', label: 'Status' },
-  { value: 'riskScore', label: 'Risk score' },
-  { value: 'riskLevel', label: 'Risk level' },
-  { value: 'transactionCode', label: 'Code' },
-  { value: 'paymentType', label: 'Payment type' },
+const SORT_OPTIONS: TransactionSortBy[] = [
+  'createdAt',
+  'amount',
+  'status',
+  'riskScore',
+  'riskLevel',
+  'transactionCode',
+  'paymentType',
 ]
+
+const SORT_LABEL_KEYS: Record<TransactionSortBy, string> = {
+  createdAt: 'transactions.sortCreated',
+  amount: 'transactions.sortAmount',
+  status: 'transactions.sortStatus',
+  riskScore: 'transactions.sortRiskScore',
+  riskLevel: 'transactions.sortRiskLevel',
+  transactionCode: 'transactions.sortCode',
+  paymentType: 'transactions.sortPaymentType',
+}
 
 function toDatetimeLocalValue(iso: string): string {
   if (!iso) {
@@ -84,6 +95,9 @@ function parseOptionalNumber(value: string): number | null {
 
 export function TransactionsPage() {
   const { hasRole } = useAuth()
+  const t = useT()
+  const { locale } = useLocale()
+  const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-US'
   const canCreate = hasRole('Admin', 'Analyst')
   const canViewCards = hasRole('Admin', 'Analyst')
   const [searchParams, setSearchParams] = useSearchParams()
@@ -197,7 +211,7 @@ export function TransactionsPage() {
           setOptionsError(
             err instanceof ApiError
               ? err.message
-              : 'Unable to load filter options.',
+              : t('transactions.optionsFailed'),
           )
         }
       } finally {
@@ -212,7 +226,7 @@ export function TransactionsPage() {
     return () => {
       cancelled = true
     }
-  }, [canCreate, canViewCards])
+  }, [canCreate, canViewCards, t])
 
   useEffect(() => {
     let cancelled = false
@@ -247,7 +261,7 @@ export function TransactionsPage() {
           setError(
             err instanceof ApiError
               ? err.message
-              : 'Unable to load transactions.',
+              : t('transactions.loadFailed'),
           )
         }
       } finally {
@@ -276,6 +290,7 @@ export function TransactionsPage() {
     sortByFromUrl,
     sortDirectionFromUrl,
     reloadToken,
+    t,
   ])
 
   function updateFilters(next: {
@@ -369,12 +384,12 @@ export function TransactionsPage() {
     const createdToIso = fromDatetimeLocalValue(createdToInput)
 
     if (createdFromInput && !createdFromIso) {
-      setError('Created from must be a valid date/time.')
+      setError(t('transactions.invalidCreatedFrom'))
       return
     }
 
     if (createdToInput && !createdToIso) {
-      setError('Created to must be a valid date/time.')
+      setError(t('transactions.invalidCreatedTo'))
       return
     }
 
@@ -382,12 +397,12 @@ export function TransactionsPage() {
     const maxAmount = parseOptionalNumber(maxAmountInput)
 
     if (minAmountInput.trim() && minAmount === null) {
-      setError('Min amount must be a valid number.')
+      setError(t('transactions.invalidMinAmount'))
       return
     }
 
     if (maxAmountInput.trim() && maxAmount === null) {
-      setError('Max amount must be a valid number.')
+      setError(t('transactions.invalidMaxAmount'))
       return
     }
 
@@ -432,13 +447,13 @@ export function TransactionsPage() {
 
     const parsedAmount = Number(amount)
     if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
-      setPayError('Amount must be a positive number.')
+      setPayError(t('transactions.amountPositive'))
       setIsPaying(false)
       return
     }
 
     if (!merchantId || !cardId) {
-      setPayError('Select both a merchant and a card.')
+      setPayError(t('transactions.selectBoth'))
       setIsPaying(false)
       return
     }
@@ -464,7 +479,7 @@ export function TransactionsPage() {
         const details = err.errors.length > 0 ? ` ${err.errors.join(' ')}` : ''
         setPayError(`${err.message}${details}`)
       } else {
-        setPayError('Unable to create payment.')
+        setPayError(t('transactions.payFailed'))
       }
     } finally {
       setIsPaying(false)
@@ -481,33 +496,25 @@ export function TransactionsPage() {
     <div className="page page-wide">
       <div className="page-header">
         <div>
-          <h1>Transactions</h1>
-          <p>
-            Simulate payments, filter the ledger, and open transaction detail
-            with merchant and card links.
-          </p>
+          <h1>{t('transactions.title')}</h1>
+          <p>{t('transactions.subtitle')}</p>
         </div>
       </div>
 
       {canCreate ? (
         <form className="panel-form" onSubmit={handleMakePayment}>
-          <h2>Payment Simulator</h2>
-          <p className="form-hint">
-            Choose a merchant and card, then submit a demo payment. Inactive
-            merchants, non-active cards, and insufficient limits are declined.
-            Duplicate clicks within 30 seconds (or the same idempotency key) reuse
-            the original payment without charging again.
-          </p>
+          <h2>{t('transactions.simulatorTitle')}</h2>
+          <p className="form-hint">{t('transactions.simulatorHint')}</p>
 
           {optionsLoading ? (
-            <p className="form-hint">Loading merchants and cards...</p>
+            <p className="form-hint">{t('transactions.loadingOptions')}</p>
           ) : null}
 
           {optionsError ? <div className="form-error">{optionsError}</div> : null}
 
           <div className="form-grid form-grid-simulator">
             <label htmlFor="simMerchant">
-              Merchant
+              {t('transactions.merchant')}
               <select
                 id="simMerchant"
                 value={merchantId}
@@ -516,19 +523,19 @@ export function TransactionsPage() {
                 disabled={optionsLoading || merchants.length === 0}
               >
                 {merchants.length === 0 ? (
-                  <option value="">No merchants available</option>
+                  <option value="">{t('transactions.noMerchants')}</option>
                 ) : null}
                 {merchants.map((merchant) => (
                   <option key={merchant.id} value={merchant.id}>
                     {merchant.name} ({merchant.merchantCode})
-                    {merchant.isActive ? '' : ' — Inactive'}
+                    {merchant.isActive ? '' : t('transactions.inactiveSuffix')}
                   </option>
                 ))}
               </select>
             </label>
 
             <label htmlFor="simCard">
-              Card
+              {t('transactions.card')}
               <select
                 id="simCard"
                 value={cardId}
@@ -537,19 +544,19 @@ export function TransactionsPage() {
                 disabled={optionsLoading || cards.length === 0}
               >
                 {cards.length === 0 ? (
-                  <option value="">No cards available</option>
+                  <option value="">{t('transactions.noCards')}</option>
                 ) : null}
                 {cards.map((card) => (
                   <option key={card.id} value={card.id}>
-                    {card.maskedCardNumber} · {card.cardType} · {card.status} ·
-                    avail {card.availableLimit.toFixed(2)}
+                    {card.maskedCardNumber} · {t(`status.${card.cardType}`)} ·{' '}
+                    {t(`status.${card.status}`)} · {card.availableLimit.toFixed(2)}
                   </option>
                 ))}
               </select>
             </label>
 
             <label htmlFor="simAmount">
-              Amount
+              {t('transactions.amount')}
               <input
                 id="simAmount"
                 type="number"
@@ -562,7 +569,7 @@ export function TransactionsPage() {
             </label>
 
             <label htmlFor="simCurrency">
-              Currency
+              {t('transactions.currency')}
               <select
                 id="simCurrency"
                 value={currency}
@@ -579,7 +586,7 @@ export function TransactionsPage() {
             </label>
 
             <label htmlFor="simPaymentType">
-              Payment type
+              {t('transactions.paymentType')}
               <select
                 id="simPaymentType"
                 value={paymentType}
@@ -589,7 +596,7 @@ export function TransactionsPage() {
               >
                 {PAYMENT_TYPES.map((type) => (
                   <option key={type} value={type}>
-                    {type}
+                    {t(`status.${type}`)}
                   </option>
                 ))}
               </select>
@@ -598,7 +605,7 @@ export function TransactionsPage() {
 
           {selectedCard ? (
             <p className="form-hint">
-              Selected card available limit:{' '}
+              {t('transactions.availableLimit')}{' '}
               <strong>{selectedCard.availableLimit.toFixed(2)}</strong>
             </p>
           ) : null}
@@ -609,20 +616,23 @@ export function TransactionsPage() {
             <div className={decisionPanelClass(lastResult.status)}>
               <div className="decision-panel-header">
                 <strong>
-                  {lastResult.status}
-                  {lastResult.isReplay ? ' (replay)' : ''}
+                  {t(`status.${lastResult.status}`)}
+                  {lastResult.isReplay ? ` ${t('transactions.replay')}` : ''}
                 </strong>
                 <span className="mono-text">{lastResult.transactionCode}</span>
               </div>
               <p>
                 {lastResult.declineReason ??
                   lastResult.decisionMessage ??
-                  `${formatAmount(lastResult.amount, lastResult.currency)} · ${lastResult.paymentType}`}
+                  `${formatAmount(lastResult.amount, lastResult.currency)} · ${t(`status.${lastResult.paymentType}`)}`}
               </p>
               <p className="form-hint">
-                Risk: {lastResult.riskLevel} ({lastResult.riskScore}) ·{' '}
+                {t('transactions.riskLine', {
+                  level: t(`status.${lastResult.riskLevel}`),
+                  score: lastResult.riskScore,
+                })}{' '}
                 <Link className="text-link" to={`/transactions/${lastResult.id}`}>
-                  View transaction
+                  {t('transactions.viewTransaction')}
                 </Link>
               </p>
             </div>
@@ -635,47 +645,46 @@ export function TransactionsPage() {
               isPaying || optionsLoading || !merchantId || !cardId || !!optionsError
             }
           >
-            {isPaying ? 'Processing...' : 'Make Payment'}
+            {isPaying
+              ? t('transactions.processing')
+              : t('transactions.makePayment')}
           </button>
         </form>
       ) : (
         <div className="notice-card">
-          <h2>Read-only access</h2>
-          <p>
-            Your Viewer role can review and filter transactions below. Payment
-            simulation is available to Admin and Analyst users.
-          </p>
+          <h2>{t('transactions.readOnlyTitle')}</h2>
+          <p>{t('transactions.readOnlyBody')}</p>
         </div>
       )}
 
       <form className="panel-form filter-panel" onSubmit={handleFilterSubmit}>
         <div className="page-header-row filter-panel-header">
-          <h2>Filters</h2>
+          <h2>{t('transactions.filtersTitle')}</h2>
           {hasActiveFilters ? (
             <button
               type="button"
               className="secondary-button"
               onClick={clearAllFilters}
             >
-              Clear all
+              {t('common.clearAll')}
             </button>
           ) : null}
         </div>
 
         <div className="form-grid form-grid-filters">
           <label htmlFor="txSearch">
-            Search
+            {t('common.search')}
             <input
               id="txSearch"
               type="search"
-              placeholder="Code, merchant, or card"
+              placeholder={t('transactions.searchPlaceholder')}
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
             />
           </label>
 
           <label htmlFor="txStatus">
-            Status
+            {t('common.status')}
             <select
               id="txStatus"
               value={statusFromUrl}
@@ -686,17 +695,19 @@ export function TransactionsPage() {
                 })
               }
             >
-              <option value="all">All statuses</option>
-              <option value="Approved">Approved</option>
-              <option value="Declined">Declined</option>
-              <option value="Pending">Pending</option>
-              <option value="Refunded">Refunded</option>
-              <option value="PartiallyRefunded">Partially refunded</option>
+              <option value="all">{t('transactions.allStatuses')}</option>
+              <option value="Approved">{t('status.Approved')}</option>
+              <option value="Declined">{t('status.Declined')}</option>
+              <option value="Pending">{t('status.Pending')}</option>
+              <option value="Refunded">{t('status.Refunded')}</option>
+              <option value="PartiallyRefunded">
+                {t('status.PartiallyRefunded')}
+              </option>
             </select>
           </label>
 
           <label htmlFor="txPaymentType">
-            Payment type
+            {t('transactions.paymentType')}
             <select
               id="txPaymentType"
               value={paymentTypeFromUrl}
@@ -707,17 +718,17 @@ export function TransactionsPage() {
                 })
               }
             >
-              <option value="all">All types</option>
+              <option value="all">{t('transactions.allTypes')}</option>
               {PAYMENT_TYPES.map((type) => (
                 <option key={type} value={type}>
-                  {type}
+                  {t(`status.${type}`)}
                 </option>
               ))}
             </select>
           </label>
 
           <label htmlFor="txMerchant">
-            Merchant
+            {t('transactions.merchant')}
             <select
               id="txMerchant"
               value={merchantIdFromUrl}
@@ -729,7 +740,7 @@ export function TransactionsPage() {
               }
               disabled={optionsLoading}
             >
-              <option value="">All merchants</option>
+              <option value="">{t('transactions.allMerchants')}</option>
               {merchants.map((merchant) => (
                 <option key={merchant.id} value={merchant.id}>
                   {merchant.name} ({merchant.merchantCode})
@@ -739,7 +750,7 @@ export function TransactionsPage() {
           </label>
 
           <label htmlFor="txCard">
-            Card
+            {t('transactions.card')}
             <select
               id="txCard"
               value={cardIdFromUrl}
@@ -752,18 +763,20 @@ export function TransactionsPage() {
               disabled={optionsLoading || !canViewCards}
             >
               <option value="">
-                {canViewCards ? 'All cards' : 'Card filter via detail links'}
+                {canViewCards
+                  ? t('transactions.allCards')
+                  : t('transactions.cardFilterViaLinks')}
               </option>
               {cards.map((card) => (
                 <option key={card.id} value={card.id}>
-                  {card.maskedCardNumber} · {card.status}
+                  {card.maskedCardNumber} · {t(`status.${card.status}`)}
                 </option>
               ))}
             </select>
           </label>
 
           <label htmlFor="txMinAmount">
-            Min amount
+            {t('transactions.minAmount')}
             <input
               id="txMinAmount"
               type="number"
@@ -776,7 +789,7 @@ export function TransactionsPage() {
           </label>
 
           <label htmlFor="txMaxAmount">
-            Max amount
+            {t('transactions.maxAmount')}
             <input
               id="txMaxAmount"
               type="number"
@@ -789,7 +802,7 @@ export function TransactionsPage() {
           </label>
 
           <label htmlFor="txCreatedFrom">
-            Created from
+            {t('transactions.createdFrom')}
             <input
               id="txCreatedFrom"
               type="datetime-local"
@@ -799,7 +812,7 @@ export function TransactionsPage() {
           </label>
 
           <label htmlFor="txCreatedTo">
-            Created to
+            {t('transactions.createdTo')}
             <input
               id="txCreatedTo"
               type="datetime-local"
@@ -809,7 +822,7 @@ export function TransactionsPage() {
           </label>
 
           <label htmlFor="txSortBy">
-            Sort by
+            {t('transactions.sortBy')}
             <select
               id="txSortBy"
               value={sortByFromUrl}
@@ -820,16 +833,16 @@ export function TransactionsPage() {
                 })
               }
             >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+              {SORT_OPTIONS.map((value) => (
+                <option key={value} value={value}>
+                  {t(SORT_LABEL_KEYS[value])}
                 </option>
               ))}
             </select>
           </label>
 
           <label htmlFor="txSortDirection">
-            Direction
+            {t('transactions.direction')}
             <select
               id="txSortDirection"
               value={sortDirectionFromUrl}
@@ -840,15 +853,15 @@ export function TransactionsPage() {
                 })
               }
             >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
+              <option value="desc">{t('transactions.descending')}</option>
+              <option value="asc">{t('transactions.ascending')}</option>
             </select>
           </label>
         </div>
 
         <div className="action-row">
           <button type="submit" className="primary-button">
-            Apply filters
+            {t('common.applyFilters')}
           </button>
         </div>
       </form>
@@ -856,42 +869,58 @@ export function TransactionsPage() {
       {hasActiveFilters ? (
         <div className="filter-chips">
           {statusFromUrl !== 'all' ? (
-            <span className="filter-chip">Status: {statusFromUrl}</span>
+            <span className="filter-chip">
+              {t('transactions.chipStatus', {
+                value: t(`status.${statusFromUrl}`),
+              })}
+            </span>
           ) : null}
           {paymentTypeFromUrl !== 'all' ? (
-            <span className="filter-chip">Type: {paymentTypeFromUrl}</span>
+            <span className="filter-chip">
+              {t('transactions.chipType', {
+                value: t(`status.${paymentTypeFromUrl}`),
+              })}
+            </span>
           ) : null}
           {merchantIdFromUrl ? (
             <span className="filter-chip">
-              Merchant:{' '}
-              {selectedFilterMerchant?.name ?? merchantIdFromUrl.slice(0, 8)}
+              {t('transactions.chipMerchant', {
+                value:
+                  selectedFilterMerchant?.name ?? merchantIdFromUrl.slice(0, 8),
+              })}
               <button
                 type="button"
                 onClick={() => updateFilters({ merchantId: '', page: 1 })}
               >
-                Clear
+                {t('common.clear')}
               </button>
             </span>
           ) : null}
           {cardIdFromUrl ? (
             <span className="filter-chip">
-              Card:{' '}
-              {selectedFilterCard?.maskedCardNumber ?? cardIdFromUrl.slice(0, 8)}
+              {t('transactions.chipCard', {
+                value:
+                  selectedFilterCard?.maskedCardNumber ??
+                  cardIdFromUrl.slice(0, 8),
+              })}
               <button
                 type="button"
                 onClick={() => updateFilters({ cardId: '', page: 1 })}
               >
-                Clear
+                {t('common.clear')}
               </button>
             </span>
           ) : null}
           {minAmountFromUrl || maxAmountFromUrl ? (
             <span className="filter-chip">
-              Amount: {minAmountFromUrl || '…'} – {maxAmountFromUrl || '…'}
+              {t('transactions.chipAmount', {
+                min: minAmountFromUrl || '…',
+                max: maxAmountFromUrl || '…',
+              })}
             </span>
           ) : null}
           {createdFromFromUrl || createdToFromUrl ? (
-            <span className="filter-chip">Date range active</span>
+            <span className="filter-chip">{t('transactions.chipDate')}</span>
           ) : null}
         </div>
       ) : null}
@@ -900,17 +929,17 @@ export function TransactionsPage() {
 
       {isLoading ? (
         <div className="notice-card">
-          <p>Loading transactions...</p>
+          <p>{t('transactions.loadingList')}</p>
         </div>
       ) : null}
 
       {!isLoading && result && result.items.length === 0 ? (
         <div className="notice-card">
-          <h2>No transactions found</h2>
+          <h2>{t('transactions.emptyTitle')}</h2>
           <p>
             {canCreate
-              ? 'Run a payment above or adjust your filters.'
-              : 'Try a different search term or filter.'}
+              ? t('transactions.emptyCreateHint')
+              : t('transactions.emptyFilterHint')}
           </p>
         </div>
       ) : null}
@@ -921,14 +950,14 @@ export function TransactionsPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Merchant</th>
-                  <th>Card</th>
-                  <th>Amount</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Risk</th>
-                  <th>Created</th>
+                  <th>{t('transactions.colCode')}</th>
+                  <th>{t('transactions.colMerchant')}</th>
+                  <th>{t('transactions.colCard')}</th>
+                  <th>{t('transactions.colAmount')}</th>
+                  <th>{t('transactions.colType')}</th>
+                  <th>{t('transactions.colStatus')}</th>
+                  <th>{t('transactions.colRisk')}</th>
+                  <th>{t('transactions.colCreated')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -949,7 +978,7 @@ export function TransactionsPage() {
                         className="text-link"
                         to={`/transactions?merchantId=${transaction.merchantId}`}
                       >
-                        Filter
+                        {t('common.filter')}
                       </Link>
                     </td>
                     <td>
@@ -958,24 +987,26 @@ export function TransactionsPage() {
                         className="text-link"
                         to={`/transactions?cardId=${transaction.cardId}`}
                       >
-                        Filter
+                        {t('common.filter')}
                       </Link>
                     </td>
                     <td>
                       {formatAmount(transaction.amount, transaction.currency)}
                     </td>
-                    <td>{transaction.paymentType}</td>
+                    <td>{t(`status.${transaction.paymentType}`)}</td>
                     <td>
                       <span className={transactionStatusClass(transaction.status)}>
-                        {transaction.status}
+                        {t(`status.${transaction.status}`)}
                       </span>
                     </td>
                     <td>
                       <span className={riskLevelClass(transaction.riskLevel)}>
-                        {transaction.riskLevel}
+                        {t(`status.${transaction.riskLevel}`)}
                       </span>
                     </td>
-                    <td>{formatDateTime(transaction.createdAt)}</td>
+                    <td>
+                      {formatDateTime(transaction.createdAt, dateLocale)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -989,11 +1020,14 @@ export function TransactionsPage() {
               disabled={!result.hasPreviousPage}
               onClick={() => updateFilters({ page: page - 1 })}
             >
-              Previous
+              {t('common.previous')}
             </button>
             <span>
-              Page {result.page} of {Math.max(result.totalPages, 1)} ·{' '}
-              {result.totalCount} total
+              {t('common.pageOf', {
+                page: result.page,
+                totalPages: Math.max(result.totalPages, 1),
+                totalCount: result.totalCount,
+              })}
             </span>
             <button
               type="button"
@@ -1001,7 +1035,7 @@ export function TransactionsPage() {
               disabled={!result.hasNextPage}
               onClick={() => updateFilters({ page: page + 1 })}
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </>

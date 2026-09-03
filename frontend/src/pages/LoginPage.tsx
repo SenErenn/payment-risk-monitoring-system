@@ -2,11 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { LanguageSwitcher, useT } from '../i18n'
 
 export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const t = useT()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +34,7 @@ export function LoginPage() {
       if (err instanceof ApiError) {
         setError(err.message)
       } else {
-        setError('Unable to sign in. Please try again.')
+        setError(t('login.failed'))
       }
     } finally {
       setIsSubmitting(false)
@@ -42,16 +44,20 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-panel">
+        <div className="login-language">
+          <LanguageSwitcher />
+        </div>
+
         <div className="login-brand">
-          <span className="brand">PayScope</span>
-          <p>Payment Risk Monitoring System</p>
+          <span className="brand">{t('brand.name')}</span>
+          <p>{t('brand.fullName')}</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <h1>Sign in</h1>
-          <p className="login-subtitle">Use your internal account to continue.</p>
+          <h1>{t('login.title')}</h1>
+          <p className="login-subtitle">{t('login.subtitle')}</p>
 
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">{t('common.email')}</label>
           <input
             id="email"
             type="email"
@@ -61,7 +67,7 @@ export function LoginPage() {
             required
           />
 
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">{t('common.password')}</label>
           <input
             id="password"
             type="password"
@@ -74,12 +80,12 @@ export function LoginPage() {
           {error ? <div className="form-error">{error}</div> : null}
 
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in...' : 'Sign in'}
+            {isSubmitting ? t('login.submitting') : t('login.submit')}
           </button>
         </form>
 
         <div className="login-hint">
-          <p>Development credentials are listed in the project README.</p>
+          <p>{t('login.hint')}</p>
         </div>
       </div>
     </div>

@@ -1,19 +1,21 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useT } from '../i18n'
 import { getNavigationForRole } from '../navigation/navItems'
 
 export function Sidebar() {
   const { user } = useAuth()
+  const t = useT()
   const items = getNavigationForRole(user?.role)
 
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="brand">PayScope</span>
-        <span className="sidebar-subtitle">Risk Console</span>
+        <span className="brand">{t('brand.name')}</span>
+        <span className="sidebar-subtitle">{t('brand.subtitle')}</span>
       </div>
 
-      <nav className="sidebar-nav" aria-label="Main">
+      <nav className="sidebar-nav" aria-label={t('layout.mainNav')}>
         {items.map((item) => (
           <NavLink
             key={item.path}
@@ -22,7 +24,7 @@ export function Sidebar() {
               isActive ? 'sidebar-link active' : 'sidebar-link'
             }
           >
-            {item.label}
+            {t(item.labelKey)}
           </NavLink>
         ))}
       </nav>

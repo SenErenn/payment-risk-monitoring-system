@@ -1,49 +1,49 @@
 import type { UserRole } from '../auth/types'
 
 export interface NavItem {
-  label: string
+  labelKey: string
   path: string
   roles: UserRole[]
 }
 
 export const navigationItems: NavItem[] = [
   {
-    label: 'Dashboard',
+    labelKey: 'nav.dashboard',
     path: '/dashboard',
     roles: ['Admin', 'Analyst', 'Viewer'],
   },
   {
-    label: 'Transactions',
+    labelKey: 'nav.transactions',
     path: '/transactions',
     roles: ['Admin', 'Analyst', 'Viewer'],
   },
   {
-    label: 'Risk Alerts',
+    labelKey: 'nav.riskAlerts',
     path: '/risk-alerts',
     roles: ['Admin', 'Analyst'],
   },
   {
-    label: 'Merchants',
+    labelKey: 'nav.merchants',
     path: '/merchants',
     roles: ['Admin', 'Viewer'],
   },
   {
-    label: 'Cards',
+    labelKey: 'nav.cards',
     path: '/cards',
     roles: ['Admin'],
   },
   {
-    label: 'Risk Rules',
+    labelKey: 'nav.riskRules',
     path: '/risk-rules',
     roles: ['Admin'],
   },
   {
-    label: 'Users',
+    labelKey: 'nav.users',
     path: '/users',
     roles: ['Admin'],
   },
   {
-    label: 'Audit Logs',
+    labelKey: 'nav.auditLogs',
     path: '/audit-logs',
     roles: ['Admin'],
   },

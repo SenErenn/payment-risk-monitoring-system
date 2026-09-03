@@ -1,28 +1,33 @@
+import { useT } from '../i18n'
+
 interface PlaceholderPageProps {
-  title: string
-  description: string
-  comingIn?: string
+  titleKey: string
+  descriptionKey: string
+  comingInKey?: string
 }
 
 export function PlaceholderPage({
-  title,
-  description,
-  comingIn,
+  titleKey,
+  descriptionKey,
+  comingInKey,
 }: PlaceholderPageProps) {
+  const t = useT()
+
   return (
     <div className="page">
       <div className="page-header">
         <div>
-          <h1>{title}</h1>
-          <p>{description}</p>
+          <h1>{t(titleKey)}</h1>
+          <p>{t(descriptionKey)}</p>
         </div>
       </div>
 
       <div className="notice-card">
-        <h2>Placeholder screen</h2>
+        <h2>{t('placeholder.screenTitle')}</h2>
         <p>
-          This page is visible for authorized roles. Feature implementation
-          {comingIn ? ` arrives in ${comingIn}.` : ' arrives in a later PR.'}
+          {comingInKey
+            ? t('placeholder.bodyWithPr', { comingIn: t(comingInKey) })
+            : t('placeholder.bodyDefault')}
         </p>
       </div>
     </div>
