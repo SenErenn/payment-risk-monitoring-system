@@ -27,6 +27,34 @@ function buildQuery(params: TransactionListParams): string {
     query.set('cardId', params.cardId)
   }
 
+  if (params.paymentType) {
+    query.set('paymentType', params.paymentType)
+  }
+
+  if (params.createdFrom) {
+    query.set('createdFrom', params.createdFrom)
+  }
+
+  if (params.createdTo) {
+    query.set('createdTo', params.createdTo)
+  }
+
+  if (params.minAmount !== undefined && params.minAmount !== null) {
+    query.set('minAmount', String(params.minAmount))
+  }
+
+  if (params.maxAmount !== undefined && params.maxAmount !== null) {
+    query.set('maxAmount', String(params.maxAmount))
+  }
+
+  if (params.sortBy) {
+    query.set('sortBy', params.sortBy)
+  }
+
+  if (params.sortDirection) {
+    query.set('sortDirection', params.sortDirection)
+  }
+
   return query.toString()
 }
 

@@ -56,11 +56,41 @@ public class TransactionService
             transactionsQuery = transactionsQuery.Where(transaction => transaction.CardId == query.CardId.Value);
         }
 
+        if (query.PaymentType.HasValue)
+        {
+            transactionsQuery = transactionsQuery.Where(transaction =>
+                transaction.PaymentType == query.PaymentType.Value);
+        }
+
+        if (query.CreatedFrom.HasValue)
+        {
+            var createdFrom = NormalizeToUtc(query.CreatedFrom.Value);
+            transactionsQuery = transactionsQuery.Where(transaction => transaction.CreatedAt >= createdFrom);
+        }
+
+        if (query.CreatedTo.HasValue)
+        {
+            var createdTo = NormalizeToUtc(query.CreatedTo.Value);
+            transactionsQuery = transactionsQuery.Where(transaction => transaction.CreatedAt <= createdTo);
+        }
+
+        if (query.MinAmount.HasValue)
+        {
+            transactionsQuery = transactionsQuery.Where(transaction =>
+                transaction.Amount >= query.MinAmount.Value);
+        }
+
+        if (query.MaxAmount.HasValue)
+        {
+            transactionsQuery = transactionsQuery.Where(transaction =>
+                transaction.Amount <= query.MaxAmount.Value);
+        }
+
         var totalCount = await transactionsQuery.CountAsync(cancellationToken);
 
+        transactionsQuery = ApplySorting(transactionsQuery, query.SortBy, query.SortDirection);
+
         var transactions = await transactionsQuery
-            .OrderByDescending(transaction => transaction.CreatedAt)
-            .ThenByDescending(transaction => transaction.TransactionCode)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToListAsync(cancellationToken);
@@ -248,6 +278,62 @@ public class TransactionService
 
             throw;
         }
+    }
+
+    private static DateTime NormalizeToUtc(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+    }
+
+    private static IQueryable<Transaction> ApplySorting(
+        IQueryable<Transaction> query,
+        string sortBy,
+        string sortDirection)
+    {
+        var ascending = string.Equals(sortDirection.Trim(), "asc", StringComparison.OrdinalIgnoreCase);
+        var field = sortBy.Trim().ToLowerInvariant();
+
+        return field switch
+        {
+            "amount" => ascending
+                ? query.OrderBy(transaction => transaction.Amount)
+                    .ThenByDescending(transaction => transaction.TransactionCode)
+                : query.OrderByDescending(transaction => transaction.Amount)
+                    .ThenByDescending(transaction => transaction.TransactionCode),
+            "status" => ascending
+                ? query.OrderBy(transaction => transaction.Status)
+                    .ThenByDescending(transaction => transaction.CreatedAt)
+                : query.OrderByDescending(transaction => transaction.Status)
+                    .ThenByDescending(transaction => transaction.CreatedAt),
+            "riskscore" => ascending
+                ? query.OrderBy(transaction => transaction.RiskScore)
+                    .ThenByDescending(transaction => transaction.CreatedAt)
+                : query.OrderByDescending(transaction => transaction.RiskScore)
+                    .ThenByDescending(transaction => transaction.CreatedAt),
+            "risklevel" => ascending
+                ? query.OrderBy(transaction => transaction.RiskLevel)
+                    .ThenByDescending(transaction => transaction.CreatedAt)
+                : query.OrderByDescending(transaction => transaction.RiskLevel)
+                    .ThenByDescending(transaction => transaction.CreatedAt),
+            "transactioncode" => ascending
+                ? query.OrderBy(transaction => transaction.TransactionCode)
+                : query.OrderByDescending(transaction => transaction.TransactionCode),
+            "paymenttype" => ascending
+                ? query.OrderBy(transaction => transaction.PaymentType)
+                    .ThenByDescending(transaction => transaction.CreatedAt)
+                : query.OrderByDescending(transaction => transaction.PaymentType)
+                    .ThenByDescending(transaction => transaction.CreatedAt),
+            _ => ascending
+                ? query.OrderBy(transaction => transaction.CreatedAt)
+                    .ThenByDescending(transaction => transaction.TransactionCode)
+                : query.OrderByDescending(transaction => transaction.CreatedAt)
+                    .ThenByDescending(transaction => transaction.TransactionCode)
+        };
     }
 
     private async Task<Transaction?> FindByIdempotencyKeyAsync(
