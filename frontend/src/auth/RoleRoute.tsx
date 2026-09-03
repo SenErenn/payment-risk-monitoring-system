@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { useT } from '../i18n'
 import { useAuth } from './AuthContext'
 import type { UserRole } from './types'
 
@@ -8,11 +9,12 @@ interface RoleRouteProps {
 
 export function RoleRoute({ roles }: RoleRouteProps) {
   const { hasRole, isBootstrapping } = useAuth()
+  const t = useT()
 
   if (isBootstrapping) {
     return (
       <div className="boot-screen">
-        <p>Loading session...</p>
+        <p>{t('common.loading')}</p>
       </div>
     )
   }

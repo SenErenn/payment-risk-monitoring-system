@@ -4,6 +4,7 @@ import { ApiError } from '../api/client'
 import { getTransaction } from '../api/transactions'
 import type { Transaction } from '../api/transactionTypes'
 import { useAuth } from '../auth/AuthContext'
+import { useLocale, useT } from '../i18n'
 import {
   decisionPanelClass,
   formatAmount,
@@ -15,6 +16,9 @@ import {
 export function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { hasRole } = useAuth()
+  const t = useT()
+  const { locale } = useLocale()
+  const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-US'
   const canManageCards = hasRole('Admin')
   const canOpenMerchants = hasRole('Admin', 'Viewer')
 
@@ -27,7 +31,7 @@ export function TransactionDetailPage() {
 
     async function load() {
       if (!id) {
-        setError('Transaction id is missing.')
+        setError(t('transactions.missingId'))
         setIsLoading(false)
         return
       }
@@ -46,7 +50,7 @@ export function TransactionDetailPage() {
           setError(
             err instanceof ApiError
               ? err.message
-              : 'Unable to load transaction.',
+              : t('transactions.loadDetailFailed'),
           )
         }
       } finally {
@@ -61,13 +65,13 @@ export function TransactionDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, t])
 
   if (isLoading) {
     return (
       <div className="page">
         <div className="notice-card">
-          <p>Loading transaction...</p>
+          <p>{t('transactions.loadingDetail')}</p>
         </div>
       </div>
     )
@@ -78,10 +82,12 @@ export function TransactionDetailPage() {
       <div className="page">
         <p className="breadcrumb">
           <Link className="text-link" to="/transactions">
-            ← Transactions
+            {t('transactions.backToList')}
           </Link>
         </p>
-        <div className="form-error">{error ?? 'Transaction not found.'}</div>
+        <div className="form-error">
+          {error ?? t('transactions.notFound')}
+        </div>
       </div>
     )
   }
@@ -90,7 +96,7 @@ export function TransactionDetailPage() {
     <div className="page">
       <p className="breadcrumb">
         <Link className="text-link" to="/transactions">
-          ← Transactions
+          {t('transactions.backToList')}
         </Link>
       </p>
 
@@ -99,36 +105,37 @@ export function TransactionDetailPage() {
           <h1>{transaction.transactionCode}</h1>
           <p>
             {formatAmount(transaction.amount, transaction.currency)} ·{' '}
-            {transaction.paymentType}
+            {t(`status.${transaction.paymentType}`)}
           </p>
         </div>
         <span className={transactionStatusClass(transaction.status)}>
-          {transaction.status}
+          {t(`status.${transaction.status}`)}
         </span>
       </div>
 
       <div className={decisionPanelClass(transaction.status)}>
         <div className="decision-panel-header">
-          <strong>Decision</strong>
+          <strong>{t('transactions.decision')}</strong>
           <span className={riskLevelClass(transaction.riskLevel)}>
-            {transaction.riskLevel} · score {transaction.riskScore}
+            {t('transactions.riskScoreInline', {
+              level: t(`status.${transaction.riskLevel}`),
+              score: transaction.riskScore,
+            })}
           </span>
         </div>
         <p>
           {transaction.declineReason ??
             transaction.decisionMessage ??
-            'No decision message was recorded for this transaction.'}
+            t('transactions.noDecision')}
         </p>
         {transaction.status === 'Declined' && transaction.declineReason ? (
-          <p className="form-hint">
-            Decline reason is persisted with the transaction.
-          </p>
+          <p className="form-hint">{t('transactions.declinePersisted')}</p>
         ) : null}
       </div>
 
       <div className="info-grid">
         <div className="info-card">
-          <span className="info-label">Merchant</span>
+          <span className="info-label">{t('transactions.merchant')}</span>
           <strong>{transaction.merchantName}</strong>
           <span className="muted-text">{transaction.merchantCode}</span>
           <span className="muted-text mono-text">{transaction.merchantId}</span>
@@ -138,58 +145,58 @@ export function TransactionDetailPage() {
                 className="text-link"
                 to={`/merchants/${transaction.merchantId}`}
               >
-                Open merchant
+                {t('transactions.openMerchant')}
               </Link>
             ) : null}
             <Link
               className="text-link"
               to={`/transactions?merchantId=${transaction.merchantId}`}
             >
-              Related transactions
+              {t('transactions.relatedTransactions')}
             </Link>
           </div>
         </div>
         <div className="info-card">
-          <span className="info-label">Card</span>
+          <span className="info-label">{t('transactions.card')}</span>
           <strong className="mono-text">{transaction.maskedCardNumber}</strong>
           <span className="muted-text mono-text">{transaction.cardToken}</span>
           <span className="muted-text mono-text">{transaction.cardId}</span>
           <div className="action-row detail-links">
             {canManageCards ? (
               <Link className="text-link" to={`/cards/${transaction.cardId}`}>
-                Open card
+                {t('transactions.openCard')}
               </Link>
             ) : null}
             <Link
               className="text-link"
               to={`/transactions?cardId=${transaction.cardId}`}
             >
-              Related transactions
+              {t('transactions.relatedTransactions')}
             </Link>
           </div>
         </div>
         <div className="info-card">
-          <span className="info-label">Created</span>
-          <strong>{formatDateTime(transaction.createdAt)}</strong>
+          <span className="info-label">{t('common.created')}</span>
+          <strong>{formatDateTime(transaction.createdAt, dateLocale)}</strong>
         </div>
       </div>
 
       <div className="info-grid">
         <div className="info-card">
-          <span className="info-label">Amount</span>
+          <span className="info-label">{t('transactions.amount')}</span>
           <strong>
             {formatAmount(transaction.amount, transaction.currency)}
           </strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Payment type</span>
-          <strong>{transaction.paymentType}</strong>
+          <span className="info-label">{t('transactions.paymentType')}</span>
+          <strong>{t(`status.${transaction.paymentType}`)}</strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Status</span>
+          <span className="info-label">{t('common.status')}</span>
           <strong>
             <span className={transactionStatusClass(transaction.status)}>
-              {transaction.status}
+              {t(`status.${transaction.status}`)}
             </span>
           </strong>
         </div>

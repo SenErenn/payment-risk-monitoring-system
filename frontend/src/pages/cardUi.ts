@@ -8,8 +8,8 @@ export function formatMoney(value: number): string {
   }).format(value)
 }
 
-export function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString()
+export function formatDateTime(value: string, locale = 'tr-TR'): string {
+  return new Date(value).toLocaleString(locale)
 }
 
 export function cardStatusClass(status: CardStatus): string {

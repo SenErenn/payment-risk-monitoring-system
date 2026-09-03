@@ -1,3 +1,30 @@
+.login-language {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.language-switcher select {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  color: var(--text-primary);
+}
+
+.language-switcher.compact span {
+  display: none;
+}
+
 .boot-screen {
   min-height: 100vh;
   display: grid;

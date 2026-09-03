@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { PublicOnlyRoute } from './auth/PublicOnlyRoute'
 import { RoleRoute } from './auth/RoleRoute'
+import { LocaleProvider } from './i18n'
 import { AppLayout } from './layouts/AppLayout'
 import { AccessDeniedPage } from './pages/AccessDeniedPage'
 import { CardDetailPage } from './pages/CardDetailPage'
@@ -18,83 +19,88 @@ import './App.css'
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<PublicOnlyRoute />}>
-            <Route path="/login" element={<LoginPage />} />
-          </Route>
+    <LocaleProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<PublicOnlyRoute />}>
+              <Route path="/login" element={<LoginPage />} />
+            </Route>
 
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/access-denied" element={<AccessDeniedPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/access-denied" element={<AccessDeniedPage />} />
 
-              <Route element={<RoleRoute roles={['Admin', 'Analyst', 'Viewer']} />}>
-                <Route path="/transactions" element={<TransactionsPage />} />
-                <Route path="/transactions/:id" element={<TransactionDetailPage />} />
-              </Route>
+                <Route element={<RoleRoute roles={['Admin', 'Analyst', 'Viewer']} />}>
+                  <Route path="/transactions" element={<TransactionsPage />} />
+                  <Route
+                    path="/transactions/:id"
+                    element={<TransactionDetailPage />}
+                  />
+                </Route>
 
-              <Route element={<RoleRoute roles={['Admin', 'Analyst']} />}>
-                <Route
-                  path="/risk-alerts"
-                  element={
-                    <PlaceholderPage
-                      title="Risk Alerts"
-                      description="Investigate flagged transactions and risk signals."
-                      comingIn="a later PR"
-                    />
-                  }
-                />
-              </Route>
+                <Route element={<RoleRoute roles={['Admin', 'Analyst']} />}>
+                  <Route
+                    path="/risk-alerts"
+                    element={
+                      <PlaceholderPage
+                        titleKey="placeholder.riskAlertsTitle"
+                        descriptionKey="placeholder.riskAlertsDesc"
+                        comingInKey="placeholder.laterPr"
+                      />
+                    }
+                  />
+                </Route>
 
-              <Route element={<RoleRoute roles={['Admin', 'Viewer']} />}>
-                <Route path="/merchants" element={<MerchantsPage />} />
-                <Route path="/merchants/:id" element={<MerchantDetailPage />} />
-              </Route>
+                <Route element={<RoleRoute roles={['Admin', 'Viewer']} />}>
+                  <Route path="/merchants" element={<MerchantsPage />} />
+                  <Route path="/merchants/:id" element={<MerchantDetailPage />} />
+                </Route>
 
-              <Route element={<RoleRoute roles={['Admin']} />}>
-                <Route path="/cards" element={<CardsPage />} />
-                <Route path="/cards/:id" element={<CardDetailPage />} />
-                <Route
-                  path="/risk-rules"
-                  element={
-                    <PlaceholderPage
-                      title="Risk Rules"
-                      description="Configure rule thresholds for risk scoring."
-                      comingIn="a later PR"
-                    />
-                  }
-                />
-                <Route
-                  path="/users"
-                  element={
-                    <PlaceholderPage
-                      title="Users"
-                      description="Administer console users and roles."
-                      comingIn="a later PR"
-                    />
-                  }
-                />
-                <Route
-                  path="/audit-logs"
-                  element={
-                    <PlaceholderPage
-                      title="Audit Logs"
-                      description="Track sensitive actions across the console."
-                      comingIn="a later PR"
-                    />
-                  }
-                />
+                <Route element={<RoleRoute roles={['Admin']} />}>
+                  <Route path="/cards" element={<CardsPage />} />
+                  <Route path="/cards/:id" element={<CardDetailPage />} />
+                  <Route
+                    path="/risk-rules"
+                    element={
+                      <PlaceholderPage
+                        titleKey="placeholder.riskRulesTitle"
+                        descriptionKey="placeholder.riskRulesDesc"
+                        comingInKey="placeholder.laterPr"
+                      />
+                    }
+                  />
+                  <Route
+                    path="/users"
+                    element={
+                      <PlaceholderPage
+                        titleKey="placeholder.usersTitle"
+                        descriptionKey="placeholder.usersDesc"
+                        comingInKey="placeholder.laterPr"
+                      />
+                    }
+                  />
+                  <Route
+                    path="/audit-logs"
+                    element={
+                      <PlaceholderPage
+                        titleKey="placeholder.auditLogsTitle"
+                        descriptionKey="placeholder.auditLogsDesc"
+                        comingInKey="placeholder.laterPr"
+                      />
+                    }
+                  />
+                </Route>
               </Route>
             </Route>
-          </Route>
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </LocaleProvider>
   )
 }
 

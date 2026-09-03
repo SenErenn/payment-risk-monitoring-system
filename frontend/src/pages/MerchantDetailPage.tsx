@@ -9,15 +9,15 @@ import {
 } from '../api/merchants'
 import type { Merchant } from '../api/merchantTypes'
 import { useAuth } from '../auth/AuthContext'
-
-function formatDate(value: string): string {
-  return new Date(value).toLocaleString()
-}
+import { useLocale, useT } from '../i18n'
 
 export function MerchantDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { hasRole } = useAuth()
+  const t = useT()
+  const { locale } = useLocale()
+  const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-US'
   const canManage = hasRole('Admin')
 
   const [merchant, setMerchant] = useState<Merchant | null>(null)
@@ -35,7 +35,7 @@ export function MerchantDetailPage() {
 
     async function load() {
       if (!id) {
-        setError('Merchant id is missing.')
+        setError(t('merchants.missingId'))
         setIsLoading(false)
         return
       }
@@ -56,7 +56,7 @@ export function MerchantDetailPage() {
           setError(
             err instanceof ApiError
               ? err.message
-              : 'Unable to load merchant.',
+              : t('merchants.loadDetailFailed'),
           )
         }
       } finally {
@@ -71,7 +71,7 @@ export function MerchantDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, t])
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -94,7 +94,7 @@ export function MerchantDetailPage() {
         const details = err.errors.length > 0 ? ` ${err.errors.join(' ')}` : ''
         setActionError(`${err.message}${details}`)
       } else {
-        setActionError('Unable to update merchant.')
+        setActionError(t('merchants.updateFailed'))
       }
     } finally {
       setIsSaving(false)
@@ -118,7 +118,7 @@ export function MerchantDetailPage() {
       if (err instanceof ApiError) {
         setActionError(err.message)
       } else {
-        setActionError('Unable to update merchant status.')
+        setActionError(t('merchants.statusUpdateFailed'))
       }
     } finally {
       setIsToggling(false)
@@ -129,7 +129,7 @@ export function MerchantDetailPage() {
     return (
       <div className="page">
         <div className="notice-card">
-          <p>Loading merchant...</p>
+          <p>{t('merchants.loadingDetail')}</p>
         </div>
       </div>
     )
@@ -140,12 +140,12 @@ export function MerchantDetailPage() {
       <div className="page">
         <div className="page-header">
           <div>
-            <h1>Merchant detail</h1>
-            <p>{error ?? 'Merchant not found.'}</p>
+            <h1>{t('merchants.detailTitle')}</h1>
+            <p>{error ?? t('merchants.notFound')}</p>
           </div>
         </div>
         <Link className="text-link" to="/merchants">
-          Back to merchants
+          {t('merchants.detailBack')}
         </Link>
       </div>
     )
@@ -157,12 +157,12 @@ export function MerchantDetailPage() {
         <div>
           <p className="breadcrumb">
             <Link className="text-link" to="/merchants">
-              Merchants
+              {t('merchants.title')}
             </Link>
             <span> / {merchant.merchantCode}</span>
           </p>
           <h1>{merchant.name}</h1>
-          <p>Merchant profile used in payment simulation.</p>
+          <p>{t('merchants.detailSubtitle')}</p>
         </div>
         <div className="action-row">
           {canManage ? (
@@ -177,7 +177,7 @@ export function MerchantDetailPage() {
                   setCategory(merchant.category)
                 }}
               >
-                {isEditing ? 'Cancel edit' : 'Edit'}
+                {isEditing ? t('merchants.cancelEdit') : t('merchants.edit')}
               </button>
               <button
                 type="button"
@@ -186,10 +186,10 @@ export function MerchantDetailPage() {
                 onClick={() => void handleToggleActive()}
               >
                 {isToggling
-                  ? 'Updating...'
+                  ? t('merchants.updating')
                   : merchant.isActive
-                    ? 'Deactivate'
-                    : 'Activate'}
+                    ? t('merchants.deactivate')
+                    : t('merchants.activate')}
               </button>
             </>
           ) : null}
@@ -198,7 +198,7 @@ export function MerchantDetailPage() {
             className="secondary-button"
             onClick={() => navigate('/merchants')}
           >
-            Back
+            {t('common.back')}
           </button>
         </div>
       </div>
@@ -207,22 +207,22 @@ export function MerchantDetailPage() {
 
       <div className="info-grid">
         <div className="info-card">
-          <span className="info-label">Code</span>
+          <span className="info-label">{t('merchants.colCode')}</span>
           <strong>{merchant.merchantCode}</strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Category</span>
+          <span className="info-label">{t('merchants.category')}</span>
           <strong>{merchant.category}</strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Status</span>
+          <span className="info-label">{t('common.status')}</span>
           <strong>
             <span
               className={
                 merchant.isActive ? 'status-chip active' : 'status-chip inactive'
               }
             >
-              {merchant.isActive ? 'Active' : 'Inactive'}
+              {merchant.isActive ? t('common.active') : t('common.inactive')}
             </span>
           </strong>
         </div>
@@ -230,21 +230,25 @@ export function MerchantDetailPage() {
 
       <div className="info-grid">
         <div className="info-card">
-          <span className="info-label">Created</span>
-          <strong>{formatDate(merchant.createdAt)}</strong>
+          <span className="info-label">{t('common.created')}</span>
+          <strong>
+            {new Date(merchant.createdAt).toLocaleString(dateLocale)}
+          </strong>
         </div>
         <div className="info-card">
-          <span className="info-label">Updated</span>
-          <strong>{formatDate(merchant.updatedAt)}</strong>
+          <span className="info-label">{t('common.updated')}</span>
+          <strong>
+            {new Date(merchant.updatedAt).toLocaleString(dateLocale)}
+          </strong>
         </div>
       </div>
 
       {canManage && isEditing ? (
         <form className="panel-form" onSubmit={handleSave}>
-          <h2>Edit merchant</h2>
+          <h2>{t('merchants.editTitle')}</h2>
           <div className="form-grid">
             <label htmlFor="editName">
-              Name
+              {t('merchants.name')}
               <input
                 id="editName"
                 value={name}
@@ -253,7 +257,7 @@ export function MerchantDetailPage() {
               />
             </label>
             <label htmlFor="editCategory">
-              Category
+              {t('merchants.category')}
               <input
                 id="editCategory"
                 value={category}
@@ -263,14 +267,14 @@ export function MerchantDetailPage() {
             </label>
           </div>
           <button type="submit" className="primary-button" disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save changes'}
+            {isSaving ? t('merchants.saving') : t('merchants.saveChanges')}
           </button>
         </form>
       ) : null}
 
       {!canManage ? (
         <div className="notice-card">
-          <p>Viewer access is read-only on this page.</p>
+          <p>{t('merchants.viewerReadOnlyDetail')}</p>
         </div>
       ) : null}
     </div>

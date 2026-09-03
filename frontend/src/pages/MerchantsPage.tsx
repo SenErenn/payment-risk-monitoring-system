@@ -7,15 +7,15 @@ import {
 } from '../api/merchants'
 import type { Merchant, PagedResult } from '../api/merchantTypes'
 import { useAuth } from '../auth/AuthContext'
+import { useLocale, useT } from '../i18n'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
 
-function formatDate(value: string): string {
-  return new Date(value).toLocaleString()
-}
-
 export function MerchantsPage() {
   const { hasRole } = useAuth()
+  const t = useT()
+  const { locale } = useLocale()
+  const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-US'
   const canManage = hasRole('Admin')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -72,7 +72,7 @@ export function MerchantsPage() {
           setError(
             err instanceof ApiError
               ? err.message
-              : 'Unable to load merchants.',
+              : t('merchants.loadFailed'),
           )
         }
       } finally {
@@ -87,7 +87,7 @@ export function MerchantsPage() {
     return () => {
       cancelled = true
     }
-  }, [page, searchFromUrl, statusFromUrl, reloadToken])
+  }, [page, searchFromUrl, statusFromUrl, reloadToken, t])
 
   function updateFilters(next: {
     search?: string
@@ -143,7 +143,7 @@ export function MerchantsPage() {
         const details = err.errors.length > 0 ? ` ${err.errors.join(' ')}` : ''
         setCreateError(`${err.message}${details}`)
       } else {
-        setCreateError('Unable to create merchant.')
+        setCreateError(t('merchants.createFailed'))
       }
     } finally {
       setIsCreating(false)
@@ -154,8 +154,8 @@ export function MerchantsPage() {
     <div className="page page-wide">
       <div className="page-header page-header-row">
         <div>
-          <h1>Merchants</h1>
-          <p>Browse and manage merchant profiles used in payment simulation.</p>
+          <h1>{t('merchants.title')}</h1>
+          <p>{t('merchants.subtitle')}</p>
         </div>
         {canManage ? (
           <button
@@ -166,17 +166,17 @@ export function MerchantsPage() {
               setCreateError(null)
             }}
           >
-            {showCreate ? 'Close form' : 'Create merchant'}
+            {showCreate ? t('merchants.closeForm') : t('merchants.create')}
           </button>
         ) : null}
       </div>
 
       {canManage && showCreate ? (
         <form className="panel-form" onSubmit={handleCreate}>
-          <h2>Create merchant</h2>
+          <h2>{t('merchants.createTitle')}</h2>
           <div className="form-grid">
             <label htmlFor="merchantCode">
-              Merchant code
+              {t('merchants.code')}
               <input
                 id="merchantCode"
                 value={createCode}
@@ -186,7 +186,7 @@ export function MerchantsPage() {
               />
             </label>
             <label htmlFor="merchantName">
-              Name
+              {t('merchants.name')}
               <input
                 id="merchantName"
                 value={createName}
@@ -195,7 +195,7 @@ export function MerchantsPage() {
               />
             </label>
             <label htmlFor="merchantCategory">
-              Category
+              {t('merchants.category')}
               <input
                 id="merchantCategory"
                 value={createCategory}
@@ -210,12 +210,12 @@ export function MerchantsPage() {
                 checked={createActive}
                 onChange={(event) => setCreateActive(event.target.checked)}
               />
-              Active on create
+              {t('merchants.activeOnCreate')}
             </label>
           </div>
           {createError ? <div className="form-error">{createError}</div> : null}
           <button type="submit" className="primary-button" disabled={isCreating}>
-            {isCreating ? 'Creating...' : 'Save merchant'}
+            {isCreating ? t('merchants.creating') : t('merchants.save')}
           </button>
         </form>
       ) : null}
@@ -223,10 +223,10 @@ export function MerchantsPage() {
       <form className="toolbar" onSubmit={handleSearchSubmit}>
         <input
           type="search"
-          placeholder="Search by code, name, or category"
+          placeholder={t('merchants.searchPlaceholder')}
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
-          aria-label="Search merchants"
+          aria-label={t('merchants.searchAria')}
         />
         <select
           value={statusFromUrl}
@@ -236,14 +236,14 @@ export function MerchantsPage() {
               page: 1,
             })
           }
-          aria-label="Filter by status"
+          aria-label={t('merchants.statusFilterAria')}
         >
-          <option value="all">All statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
+          <option value="all">{t('merchants.allStatuses')}</option>
+          <option value="active">{t('common.active')}</option>
+          <option value="inactive">{t('common.inactive')}</option>
         </select>
         <button type="submit" className="secondary-button">
-          Search
+          {t('common.search')}
         </button>
       </form>
 
@@ -251,14 +251,14 @@ export function MerchantsPage() {
 
       {isLoading ? (
         <div className="notice-card">
-          <p>Loading merchants...</p>
+          <p>{t('merchants.loading')}</p>
         </div>
       ) : null}
 
       {!isLoading && result && result.items.length === 0 ? (
         <div className="notice-card">
-          <h2>No merchants found</h2>
-          <p>Try a different search term or status filter.</p>
+          <h2>{t('merchants.emptyTitle')}</h2>
+          <p>{t('merchants.emptyHint')}</p>
         </div>
       ) : null}
 
@@ -268,11 +268,11 @@ export function MerchantsPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Status</th>
-                  <th>Updated</th>
+                  <th>{t('merchants.colCode')}</th>
+                  <th>{t('merchants.colName')}</th>
+                  <th>{t('merchants.colCategory')}</th>
+                  <th>{t('merchants.colStatus')}</th>
+                  <th>{t('merchants.colUpdated')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -291,10 +291,14 @@ export function MerchantsPage() {
                           merchant.isActive ? 'status-chip active' : 'status-chip inactive'
                         }
                       >
-                        {merchant.isActive ? 'Active' : 'Inactive'}
+                        {merchant.isActive
+                          ? t('common.active')
+                          : t('common.inactive')}
                       </span>
                     </td>
-                    <td>{formatDate(merchant.updatedAt)}</td>
+                    <td>
+                      {new Date(merchant.updatedAt).toLocaleString(dateLocale)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -308,11 +312,14 @@ export function MerchantsPage() {
               disabled={!result.hasPreviousPage}
               onClick={() => updateFilters({ page: page - 1 })}
             >
-              Previous
+              {t('common.previous')}
             </button>
             <span>
-              Page {result.page} of {Math.max(result.totalPages, 1)} ·{' '}
-              {result.totalCount} total
+              {t('common.pageOf', {
+                page: result.page,
+                totalPages: Math.max(result.totalPages, 1),
+                totalCount: result.totalCount,
+              })}
             </span>
             <button
               type="button"
@@ -320,7 +327,7 @@ export function MerchantsPage() {
               disabled={!result.hasNextPage}
               onClick={() => updateFilters({ page: page + 1 })}
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </>
@@ -328,7 +335,7 @@ export function MerchantsPage() {
 
       {!canManage ? (
         <div className="notice-card">
-          <p>Viewer access is read-only. Create and edit actions require Admin.</p>
+          <p>{t('merchants.viewerReadOnly')}</p>
         </div>
       ) : null}
     </div>

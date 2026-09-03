@@ -3,8 +3,8 @@ import type {
   TransactionStatus,
 } from '../api/transactionTypes'
 
-export function formatDateTime(value: string): string {
-  return new Date(value).toLocaleString()
+export function formatDateTime(value: string, locale = 'tr-TR'): string {
+  return new Date(value).toLocaleString(locale)
 }
 
 export function formatAmount(amount: number, currency: string): string {

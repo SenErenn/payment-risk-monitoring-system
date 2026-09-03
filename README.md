@@ -219,6 +219,13 @@ Payment Simulator UI arrives in PR-014.
 - Viewer can filter; Admin/Analyst also simulate payments
 - Uses PR-016 query API (no new backend endpoints)
 
+### Localization (interim PR)
+
+- Frontend supports **Türkçe** (default) and **English**
+- Language switcher on login and top bar; preference stored in `localStorage`
+- UI chrome translated across login, layout, dashboard, transactions, merchants, cards, placeholders
+- Backend API messages remain English for now
+
 ### PostgreSQL
 
 ```bash
@@ -270,6 +277,7 @@ This project is built incrementally across 30 PRs.
 | PR-015  | Done   | Payment processing rules         |
 | PR-016  | Done   | Transaction query backend        |
 | PR-017  | Done   | Transaction frontend filters     |
+| i18n    | Done   | Turkish / English UI support     |
 | PR-018+ | —      | See project plan for details   |
 
 ## License

@@ -8,6 +8,7 @@ import type {
   CardType,
   PagedResult,
 } from '../api/cardTypes'
+import { useLocale, useT } from '../i18n'
 import { cardStatusClass, formatDateTime, formatMoney } from './cardUi'
 
 type StatusFilter = 'all' | CardStatus
@@ -15,6 +16,9 @@ type TypeFilter = 'all' | CardType
 
 export function CardsPage() {
   const navigate = useNavigate()
+  const t = useT()
+  const { locale } = useLocale()
+  const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-US'
   const [searchParams, setSearchParams] = useSearchParams()
 
   const page = Math.max(1, Number(searchParams.get('page') ?? '1') || 1)
@@ -63,7 +67,7 @@ export function CardsPage() {
         if (!cancelled) {
           setResult(null)
           setError(
-            err instanceof ApiError ? err.message : 'Unable to load cards.',
+            err instanceof ApiError ? err.message : t('cards.loadFailed'),
           )
         }
       } finally {
@@ -78,7 +82,7 @@ export function CardsPage() {
     return () => {
       cancelled = true
     }
-  }, [page, searchFromUrl, statusFromUrl, typeFromUrl, reloadToken])
+  }, [page, searchFromUrl, statusFromUrl, typeFromUrl, reloadToken, t])
 
   function updateFilters(next: {
     search?: string
@@ -125,7 +129,7 @@ export function CardsPage() {
     const available = Number(availableLimit)
 
     if (Number.isNaN(credit) || Number.isNaN(available)) {
-      setCreateError('Credit and available limits must be valid numbers.')
+      setCreateError(t('cards.invalidLimits'))
       setIsCreating(false)
       return
     }
@@ -151,7 +155,7 @@ export function CardsPage() {
         const details = err.errors.length > 0 ? ` ${err.errors.join(' ')}` : ''
         setCreateError(`${err.message}${details}`)
       } else {
-        setCreateError('Unable to create card.')
+        setCreateError(t('cards.createFailed'))
       }
     } finally {
       setIsCreating(false)
@@ -162,11 +166,8 @@ export function CardsPage() {
     <div className="page page-wide">
       <div className="page-header page-header-row">
         <div>
-          <h1>Cards</h1>
-          <p>
-            Manage demo cards with fake tokens and masked numbers. No real PAN
-            or CVV is stored.
-          </p>
+          <h1>{t('cards.title')}</h1>
+          <p>{t('cards.subtitle')}</p>
         </div>
         <button
           type="button"
@@ -176,27 +177,27 @@ export function CardsPage() {
             setCreateError(null)
           }}
         >
-          {showCreate ? 'Close form' : 'Create card'}
+          {showCreate ? t('cards.closeForm') : t('cards.create')}
         </button>
       </div>
 
       {showCreate ? (
         <form className="panel-form" onSubmit={handleCreate}>
-          <h2>Create demo card</h2>
+          <h2>{t('cards.createTitle')}</h2>
           <div className="form-grid">
             <label htmlFor="cardType">
-              Card type
+              {t('cards.cardType')}
               <select
                 id="cardType"
                 value={cardType}
                 onChange={(event) => setCardType(event.target.value as CardType)}
               >
-                <option value="Credit">Credit</option>
-                <option value="Debit">Debit</option>
+                <option value="Credit">{t('status.Credit')}</option>
+                <option value="Debit">{t('status.Debit')}</option>
               </select>
             </label>
             <label htmlFor="createStatus">
-              Status
+              {t('common.status')}
               <select
                 id="createStatus"
                 value={createStatus}
@@ -204,14 +205,14 @@ export function CardsPage() {
                   setCreateStatus(event.target.value as CardStatus)
                 }
               >
-                <option value="Active">Active</option>
-                <option value="Passive">Passive</option>
-                <option value="Blocked">Blocked</option>
-                <option value="Expired">Expired</option>
+                <option value="Active">{t('status.Active')}</option>
+                <option value="Passive">{t('status.Passive')}</option>
+                <option value="Blocked">{t('status.Blocked')}</option>
+                <option value="Expired">{t('status.Expired')}</option>
               </select>
             </label>
             <label htmlFor="creditLimit">
-              Credit limit
+              {t('cards.creditLimit')}
               <input
                 id="creditLimit"
                 type="number"
@@ -223,7 +224,7 @@ export function CardsPage() {
               />
             </label>
             <label htmlFor="availableLimit">
-              Available limit
+              {t('cards.availableLimit')}
               <input
                 id="availableLimit"
                 type="number"
@@ -235,7 +236,7 @@ export function CardsPage() {
               />
             </label>
             <label htmlFor="lastFourDigits">
-              Last four digits
+              {t('cards.lastFour')}
               <input
                 id="lastFourDigits"
                 value={lastFourDigits}
@@ -248,13 +249,10 @@ export function CardsPage() {
               />
             </label>
           </div>
-          <p className="form-hint">
-            Only the last four digits are used to build a masked number. Never
-            enter a full card number or CVV.
-          </p>
+          <p className="form-hint">{t('cards.hint')}</p>
           {createError ? <div className="form-error">{createError}</div> : null}
           <button type="submit" className="primary-button" disabled={isCreating}>
-            {isCreating ? 'Creating...' : 'Save card'}
+            {isCreating ? t('cards.creating') : t('cards.save')}
           </button>
         </form>
       ) : null}
@@ -262,10 +260,10 @@ export function CardsPage() {
       <form className="toolbar toolbar-cards" onSubmit={handleSearchSubmit}>
         <input
           type="search"
-          placeholder="Search by token or masked number"
+          placeholder={t('cards.searchPlaceholder')}
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
-          aria-label="Search cards"
+          aria-label={t('cards.searchAria')}
         />
         <select
           value={statusFromUrl}
@@ -275,13 +273,13 @@ export function CardsPage() {
               page: 1,
             })
           }
-          aria-label="Filter by status"
+          aria-label={t('cards.statusFilterAria')}
         >
-          <option value="all">All statuses</option>
-          <option value="Active">Active</option>
-          <option value="Blocked">Blocked</option>
-          <option value="Passive">Passive</option>
-          <option value="Expired">Expired</option>
+          <option value="all">{t('cards.allStatuses')}</option>
+          <option value="Active">{t('status.Active')}</option>
+          <option value="Blocked">{t('status.Blocked')}</option>
+          <option value="Passive">{t('status.Passive')}</option>
+          <option value="Expired">{t('status.Expired')}</option>
         </select>
         <select
           value={typeFromUrl}
@@ -291,14 +289,14 @@ export function CardsPage() {
               page: 1,
             })
           }
-          aria-label="Filter by type"
+          aria-label={t('cards.typeFilterAria')}
         >
-          <option value="all">All types</option>
-          <option value="Credit">Credit</option>
-          <option value="Debit">Debit</option>
+          <option value="all">{t('cards.allTypes')}</option>
+          <option value="Credit">{t('status.Credit')}</option>
+          <option value="Debit">{t('status.Debit')}</option>
         </select>
         <button type="submit" className="secondary-button">
-          Search
+          {t('common.search')}
         </button>
       </form>
 
@@ -306,14 +304,14 @@ export function CardsPage() {
 
       {isLoading ? (
         <div className="notice-card">
-          <p>Loading cards...</p>
+          <p>{t('cards.loading')}</p>
         </div>
       ) : null}
 
       {!isLoading && result && result.items.length === 0 ? (
         <div className="notice-card">
-          <h2>No cards found</h2>
-          <p>Try a different search term or filter.</p>
+          <h2>{t('cards.emptyTitle')}</h2>
+          <p>{t('cards.emptyHint')}</p>
         </div>
       ) : null}
 
@@ -323,12 +321,12 @@ export function CardsPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Masked number</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Credit limit</th>
-                  <th>Available</th>
-                  <th>Updated</th>
+                  <th>{t('cards.colMasked')}</th>
+                  <th>{t('cards.colType')}</th>
+                  <th>{t('cards.colStatus')}</th>
+                  <th>{t('cards.colCredit')}</th>
+                  <th>{t('cards.colAvailable')}</th>
+                  <th>{t('cards.colUpdated')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -339,15 +337,15 @@ export function CardsPage() {
                         {card.maskedCardNumber}
                       </Link>
                     </td>
-                    <td>{card.cardType}</td>
+                    <td>{t(`status.${card.cardType}`)}</td>
                     <td>
                       <span className={cardStatusClass(card.status)}>
-                        {card.status}
+                        {t(`status.${card.status}`)}
                       </span>
                     </td>
                     <td>{formatMoney(card.creditLimit)}</td>
                     <td>{formatMoney(card.availableLimit)}</td>
-                    <td>{formatDateTime(card.updatedAt)}</td>
+                    <td>{formatDateTime(card.updatedAt, dateLocale)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -361,11 +359,14 @@ export function CardsPage() {
               disabled={!result.hasPreviousPage}
               onClick={() => updateFilters({ page: page - 1 })}
             >
-              Previous
+              {t('common.previous')}
             </button>
             <span>
-              Page {result.page} of {Math.max(result.totalPages, 1)} ·{' '}
-              {result.totalCount} total
+              {t('common.pageOf', {
+                page: result.page,
+                totalPages: Math.max(result.totalPages, 1),
+                totalCount: result.totalCount,
+              })}
             </span>
             <button
               type="button"
@@ -373,7 +374,7 @@ export function CardsPage() {
               disabled={!result.hasNextPage}
               onClick={() => updateFilters({ page: page + 1 })}
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </>
