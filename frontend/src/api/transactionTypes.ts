@@ -31,10 +31,10 @@ export interface Transaction {
   declineReason: string | null
   idempotencyKey: string | null
   isReplay?: boolean
-  refundedAmount?: number
-  refundableAmount?: number
-  canRefund?: boolean
-  refunds?: RefundSummary[]
+  refundedAmount: number
+  refundableAmount: number
+  canRefund: boolean
+  refunds: RefundSummary[]
 }
 
 export interface RefundSummary {
@@ -46,6 +46,11 @@ export interface RefundSummary {
   currency: string
   reason: string | null
   createdAt: string
+}
+
+export interface CreateRefundPayload {
+  amount?: number
+  reason?: string
 }
 
 export interface PagedResult<T> {

@@ -132,6 +132,46 @@
   font-size: 0.9rem;
 }
 
+.form-success {
+  margin-top: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  font-size: 0.9rem;
+}
+
+.refund-mode-fieldset {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.refund-mode-fieldset legend {
+  padding: 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.refund-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.refund-mode-option input {
+  width: auto;
+  margin: 0;
+}
+
 .login-hint {
   margin-top: 1.5rem;
   padding-top: 1.25rem;
@@ -333,7 +373,8 @@
 .toolbar input,
 .toolbar select,
 .panel-form input,
-.panel-form select {
+.panel-form select,
+.panel-form textarea {
   width: 100%;
   padding: 0.7rem 0.8rem;
   border: 1px solid var(--border);
@@ -342,9 +383,15 @@
   background: #fff;
 }
 
+.panel-form textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
 .toolbar input:focus,
 .toolbar select:focus,
-.panel-form input:focus {
+.panel-form input:focus,
+.panel-form textarea:focus {
   outline: 2px solid rgba(30, 64, 175, 0.2);
   border-color: var(--accent);
 }
@@ -401,6 +448,14 @@
 .panel-form h2 {
   margin: 0;
   font-size: 1.1rem;
+}
+
+.panel-form > label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .form-grid {
@@ -539,6 +594,11 @@
 .decision-panel.declined {
   background: #fef2f2;
   border-color: #fecaca;
+}
+
+.decision-panel.refunded {
+  background: #fff7ed;
+  border-color: #fed7aa;
 }
 
 .decision-panel-header {

@@ -57,5 +57,13 @@ export function decisionPanelClass(status: TransactionStatus): string {
     return 'decision-panel declined'
   }
 
+  if (status === 'Refunded' || status === 'PartiallyRefunded') {
+    return 'decision-panel refunded'
+  }
+
   return 'decision-panel'
+}
+
+export function hasAtMostTwoDecimalPlaces(value: number): boolean {
+  return Math.round(value * 100) / 100 === value
 }
