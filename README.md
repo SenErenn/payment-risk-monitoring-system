@@ -276,6 +276,14 @@ Payment Simulator UI arrives in PR-014.
 - Access: Admin and Analyst only
 - Analyst review status transitions arrive in PR-024; alert UI arrives in PR-023
 
+### Risk Alerts Frontend (PR-023)
+
+- `/risk-alerts` list for Admin/Analyst with search, status, risk level, sorting, pagination (URL-synced)
+- Default filter shows **Open** alerts
+- `/risk-alerts/:id` detail with risk reasons, transaction/merchant/card links
+- Status and risk level badges (High / Medium / Low visuals)
+- Replaces the previous placeholder screen
+
 ### PostgreSQL
 
 ```bash
@@ -333,7 +341,8 @@ This project is built incrementally across 30 PRs.
 | PR-020  | Done   | Risk analysis engine             |
 | PR-021  | Done   | Advanced risk rules              |
 | PR-022  | Done   | Risk alerts backend              |
-| PR-023+ | —      | See project plan for details   |
+| PR-023  | Done   | Risk alerts frontend             |
+| PR-024+ | —      | See project plan for details   |
 
 ## License
 

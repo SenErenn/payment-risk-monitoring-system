@@ -13,6 +13,8 @@ import { LoginPage } from './pages/LoginPage'
 import { MerchantDetailPage } from './pages/MerchantDetailPage'
 import { MerchantsPage } from './pages/MerchantsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { RiskAlertDetailPage } from './pages/RiskAlertDetailPage'
+import { RiskAlertsPage } from './pages/RiskAlertsPage'
 import { TransactionDetailPage } from './pages/TransactionDetailPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import './App.css'
@@ -41,15 +43,10 @@ function App() {
                 </Route>
 
                 <Route element={<RoleRoute roles={['Admin', 'Analyst']} />}>
+                  <Route path="/risk-alerts" element={<RiskAlertsPage />} />
                   <Route
-                    path="/risk-alerts"
-                    element={
-                      <PlaceholderPage
-                        titleKey="placeholder.riskAlertsTitle"
-                        descriptionKey="placeholder.riskAlertsDesc"
-                        comingInKey="placeholder.laterPr"
-                      />
-                    }
+                    path="/risk-alerts/:id"
+                    element={<RiskAlertDetailPage />}
                   />
                 </Route>
 
