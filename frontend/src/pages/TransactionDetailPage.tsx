@@ -245,6 +245,13 @@ export function TransactionDetailPage() {
                 <li key={`${reason.code}-${reason.message}`}>
                   <span className="mono-text">{reason.code}</span>
                   <span>{reason.message}</span>
+                  {typeof reason.points === 'number' && reason.points > 0 ? (
+                    <span className="muted-text">
+                      {t('transactions.riskReasonPoints', {
+                        points: reason.points,
+                      })}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>

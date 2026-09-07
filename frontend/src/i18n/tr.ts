@@ -180,6 +180,7 @@ export const tr: Messages = {
     loadingDetail: 'İşlem yükleniyor...',
     riskScoreInline: '{level} · skor {score}',
     riskReasons: 'Risk nedenleri',
+    riskReasonPoints: '+{points}',
     refundedAmount: 'İade edilen tutar',
     refundableAmount: 'İade edilebilir tutar',
     refundEligibility: 'İade uygunluğu',

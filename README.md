@@ -176,10 +176,10 @@ Transaction API (PR-013 / PR-016):
 - Validates merchant/card, generates `TransactionCode`, checks amount/currency
 - Basic decision: Approved or Declined (inactive merchant, non-active card, insufficient limit)
 - Approved payments reduce card available limit
-- Risk analysis via `RiskAnalysisService` (PR-020): `RiskScore`, `RiskLevel`, `RiskReasons`
+- Risk analysis via `RiskAnalysisService` (PR-020 / PR-021): `RiskScore`, `RiskLevel`, `RiskReasons`
 - Score bands: 0–39 Low, 40–69 Medium, 70–100 High
-- Foundation signals: merchant/card/limit declines + high amount / high limit usage on approvals
-- Advanced risk rules arrive in PR-021
+- Foundation declines: inactive merchant / card / insufficient limit
+- Advanced additive rules: High Amount, High Limit Usage, Velocity, Multiple Declines, Night High Amount, Sudden Amount Increase
 
 Payment Simulator UI arrives in PR-014.
 
@@ -253,9 +253,19 @@ Payment Simulator UI arrives in PR-014.
 - Central `RiskAnalysisService` produces `RiskScore`, `RiskLevel`, and `RiskReasons` on each payment
 - Reasons persisted as JSONB on `Transactions` and returned on list/detail DTOs
 - Score bands: Low (0–39), Medium (40–69), High (70–100)
-- Foundation signals: inactive merchant, non-active card, insufficient limit, high amount (≥ 10,000), high limit usage (≥ 80%)
+- Foundation decline signals: inactive merchant, non-active card, insufficient limit
 - Transaction detail UI lists risk reason codes/messages
-- Advanced rules (velocity, night patterns, etc.) arrive in PR-021
+
+### Advanced Risk Rules (PR-021)
+
+- Additive scoring with per-reason `points` breakdown on approved payments
+- `HIGH_AMOUNT` — amount ≥ 10,000 (+45)
+- `HIGH_LIMIT_USAGE` — projected credit usage ≥ 80% (+20)
+- `VELOCITY` — ≥ 2 prior card transactions in the last 5 minutes (+25)
+- `MULTIPLE_DECLINES` — ≥ 2 declines on the card in the last 24 hours (+25)
+- `NIGHT_HIGH_AMOUNT` — amount ≥ 5,000 during UTC 22:00–05:59 (+20)
+- `SUDDEN_AMOUNT_INCREASE` — amount ≥ 3× average of last 3–5 approved amounts on the card (+20)
+- Score is the sum of matched rule points (capped at 100); no signals → `BASELINE` (15, Low)
 
 ### PostgreSQL
 
@@ -312,7 +322,8 @@ This project is built incrementally across 30 PRs.
 | PR-018  | Done   | Refund backend                   |
 | PR-019  | Done   | Refund frontend                  |
 | PR-020  | Done   | Risk analysis engine             |
-| PR-021+ | —      | See project plan for details   |
+| PR-021  | Done   | Advanced risk rules              |
+| PR-022+ | —      | See project plan for details   |
 
 ## License
 

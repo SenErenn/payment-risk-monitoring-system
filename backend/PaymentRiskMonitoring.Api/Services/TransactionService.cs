@@ -196,7 +196,11 @@ public class TransactionService
                 throw new NotFoundException("Card", request.CardId);
             }
 
-            var decision = _riskAnalysisService.AnalyzePayment(merchant, card, amount);
+            var decision = await _riskAnalysisService.AnalyzePaymentAsync(
+                merchant,
+                card,
+                amount,
+                cancellationToken);
 
             if (decision.Status == TransactionStatus.Approved)
             {
