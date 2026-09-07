@@ -180,6 +180,7 @@ export const en: Messages = {
     loadingDetail: 'Loading transaction...',
     riskScoreInline: '{level} · score {score}',
     riskReasons: 'Risk reasons',
+    riskReasonPoints: '+{points}',
     refundedAmount: 'Refunded amount',
     refundableAmount: 'Refundable amount',
     refundEligibility: 'Refund eligibility',

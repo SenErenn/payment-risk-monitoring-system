@@ -41,6 +41,7 @@ export interface Transaction {
 export interface RiskReason {
   code: string
   message: string
+  points?: number
 }
 
 export interface RefundSummary {

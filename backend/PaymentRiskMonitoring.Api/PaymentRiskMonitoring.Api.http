@@ -235,7 +235,7 @@ Idempotency-Key: demo-payment-key-001
 }
 
 ###
-### Create elevated-risk payment (HIGH_AMOUNT foundation signal, Medium)
+### Create elevated-risk payment (HIGH_AMOUNT, Medium, +45)
 POST {{baseUrl}}/api/transactions
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -247,6 +247,36 @@ Content-Type: application/json
   "currency": "TRY",
   "paymentType": "Online",
   "idempotencyKey": "demo-high-amount-001"
+}
+
+###
+### Velocity probe payments (send 3 times quickly on same card → VELOCITY on 3rd)
+POST {{baseUrl}}/api/transactions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "merchantId": "{{merchantId}}",
+  "cardId": "{{cardId}}",
+  "amount": 25,
+  "currency": "TRY",
+  "paymentType": "Chip",
+  "idempotencyKey": "demo-velocity-001"
+}
+
+###
+### Night high amount (fires only UTC 22:00–05:59, amount ≥ 5000)
+POST {{baseUrl}}/api/transactions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "merchantId": "{{merchantId}}",
+  "cardId": "{{cardId}}",
+  "amount": 5500,
+  "currency": "TRY",
+  "paymentType": "Online",
+  "idempotencyKey": "demo-night-high-001"
 }
 
 ###
