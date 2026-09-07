@@ -242,6 +242,12 @@ public class TransactionService
 
             _dbContext.Transactions.Add(transaction);
 
+            if (transaction.RiskLevel == RiskLevel.High)
+            {
+                _dbContext.RiskAlerts.Add(
+                    RiskAlertService.CreateOpenAlertForTransaction(transaction, now));
+            }
+
             try
             {
                 await _dbContext.SaveChangesAsync(cancellationToken);

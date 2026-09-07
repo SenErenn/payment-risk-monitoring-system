@@ -3,6 +3,7 @@
 @merchantId = aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
 @cardId = e1111111-1111-1111-1111-111111111111
 @transactionId = f1111111-1111-1111-1111-111111111111
+@alertId = a1111111-1111-1111-1111-111111111111
 
 ### Health
 GET {{baseUrl}}/api/health
@@ -305,3 +306,22 @@ Content-Type: application/json
 {
   "reason": "Full remaining refund"
 }
+
+###
+### List risk alerts
+GET {{baseUrl}}/api/risk-alerts?page=1&pageSize=10&status=Open&sortBy=createdAt&sortDirection=desc
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Open risk alerts shortcut
+GET {{baseUrl}}/api/risk-alerts/open?page=1&pageSize=10
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+
+###
+### Risk alert detail
+GET {{baseUrl}}/api/risk-alerts/{{alertId}}
+Authorization: Bearer {{accessToken}}
+Accept: application/json
+

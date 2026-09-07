@@ -52,4 +52,6 @@ public class Transaction
     public Card Card { get; set; } = null!;
 
     public ICollection<Refund> Refunds { get; set; } = new List<Refund>();
+
+    public RiskAlert? RiskAlert { get; set; }
 }

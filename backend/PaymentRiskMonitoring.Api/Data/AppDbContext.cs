@@ -20,6 +20,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Refund> Refunds => Set<Refund>();
 
+    public DbSet<RiskAlert> RiskAlerts => Set<RiskAlert>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
