@@ -1,3 +1,4 @@
+using PaymentRiskMonitoring.Api.DTOs.Refunds;
 using PaymentRiskMonitoring.Api.Enums;
 
 namespace PaymentRiskMonitoring.Api.DTOs.Transactions;
@@ -41,4 +42,12 @@ public class TransactionDto
     public string? IdempotencyKey { get; init; }
 
     public bool IsReplay { get; init; }
+
+    public decimal RefundedAmount { get; init; }
+
+    public decimal RefundableAmount { get; init; }
+
+    public bool CanRefund { get; init; }
+
+    public IReadOnlyList<RefundDto> Refunds { get; init; } = Array.Empty<RefundDto>();
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PaymentRiskMonitoring.Api.Authorization;
+using PaymentRiskMonitoring.Api.DTOs.Refunds;
 using PaymentRiskMonitoring.Api.DTOs.Transactions;
 using PaymentRiskMonitoring.Api.Models.Responses;
 using PaymentRiskMonitoring.Api.Services;
@@ -12,10 +13,14 @@ namespace PaymentRiskMonitoring.Api.Controllers;
 public class TransactionsController : ControllerBase
 {
     private readonly TransactionService _transactionService;
+    private readonly RefundService _refundService;
 
-    public TransactionsController(TransactionService transactionService)
+    public TransactionsController(
+        TransactionService transactionService,
+        RefundService refundService)
     {
         _transactionService = transactionService;
+        _refundService = refundService;
     }
 
     [Authorize(Policy = AuthorizationPolicies.StaffRead)]
@@ -65,5 +70,29 @@ public class TransactionsController : ControllerBase
             nameof(GetTransactionById),
             new { id = result.Transaction.Id },
             payload);
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.StaffRead)]
+    [HttpGet("{id:guid}/refunds")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<RefundDto>>>> GetTransactionRefunds(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var refunds = await _refundService.GetRefundsForTransactionAsync(id, cancellationToken);
+        return Ok(ApiResponse<IReadOnlyList<RefundDto>>.Ok(refunds, "Refunds retrieved."));
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.AnalystOrAdmin)]
+    [HttpPost("{id:guid}/refunds")]
+    public async Task<ActionResult<ApiResponse<RefundDto>>> CreateTransactionRefund(
+        Guid id,
+        [FromBody] CreateRefundRequest request,
+        CancellationToken cancellationToken)
+    {
+        var refund = await _refundService.CreateRefundAsync(id, request, cancellationToken);
+        return CreatedAtAction(
+            nameof(GetTransactionRefunds),
+            new { id },
+            ApiResponse<RefundDto>.Ok(refund, "Refund created."));
     }
 }

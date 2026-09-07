@@ -226,6 +226,17 @@ Payment Simulator UI arrives in PR-014.
 - UI chrome translated across login, layout, dashboard, transactions, merchants, cards, placeholders
 - Backend API messages remain English for now
 
+### Refund Backend (PR-018)
+
+- `POST /api/transactions/{id}/refunds` — full or partial refund (Admin, Analyst)
+- `GET /api/transactions/{id}/refunds` — refund history (Admin, Analyst, Viewer)
+- Omit `amount` to refund the remaining balance; provide `amount` for partial refund
+- Restores card `availableLimit` (capped at credit limit)
+- Blocks over-refund and refunds on non-Approved / fully Refunded transactions
+- Updates transaction status to `PartiallyRefunded` or `Refunded`
+- Transaction DTO includes `refundedAmount`, `refundableAmount`, `canRefund`, `refunds`
+- Refund UI arrives in PR-019
+
 ### PostgreSQL
 
 ```bash
@@ -278,7 +289,8 @@ This project is built incrementally across 30 PRs.
 | PR-016  | Done   | Transaction query backend        |
 | PR-017  | Done   | Transaction frontend filters     |
 | i18n    | Done   | Turkish / English UI support     |
-| PR-018+ | —      | See project plan for details   |
+| PR-018  | Done   | Refund backend                   |
+| PR-019+ | —      | See project plan for details   |
 
 ## License
 

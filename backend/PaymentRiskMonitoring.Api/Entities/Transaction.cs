@@ -44,4 +44,6 @@ public class Transaction
     public Merchant Merchant { get; set; } = null!;
 
     public Card Card { get; set; } = null!;
+
+    public ICollection<Refund> Refunds { get; set; } = new List<Refund>();
 }

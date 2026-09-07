@@ -28,6 +28,7 @@ public class TransactionService
             .AsNoTracking()
             .Include(transaction => transaction.Merchant)
             .Include(transaction => transaction.Card)
+            .Include(transaction => transaction.Refunds)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.Search))
@@ -112,6 +113,7 @@ public class TransactionService
             .AsNoTracking()
             .Include(item => item.Merchant)
             .Include(item => item.Card)
+            .Include(item => item.Refunds)
             .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (transaction is null)
@@ -343,6 +345,7 @@ public class TransactionService
         return await _dbContext.Transactions
             .Include(transaction => transaction.Merchant)
             .Include(transaction => transaction.Card)
+            .Include(transaction => transaction.Refunds)
             .FirstOrDefaultAsync(
                 transaction => transaction.IdempotencyKey == idempotencyKey,
                 cancellationToken);
@@ -359,6 +362,7 @@ public class TransactionService
         return await _dbContext.Transactions
             .Include(transaction => transaction.Merchant)
             .Include(transaction => transaction.Card)
+            .Include(transaction => transaction.Refunds)
             .Where(transaction =>
                 transaction.MerchantId == request.MerchantId &&
                 transaction.CardId == request.CardId &&
@@ -470,6 +474,28 @@ public class TransactionService
                 _ => null
             };
 
+        var refunds = transaction.Refunds?
+            .OrderByDescending(refund => refund.CreatedAt)
+            .Select(refund => new DTOs.Refunds.RefundDto
+            {
+                Id = refund.Id,
+                RefundCode = refund.RefundCode,
+                TransactionId = transaction.Id,
+                TransactionCode = transaction.TransactionCode,
+                Amount = refund.Amount,
+                Currency = refund.Currency,
+                Reason = refund.Reason,
+                CreatedAt = refund.CreatedAt
+            })
+            .ToList()
+            ?? [];
+
+        var refundedAmount = refunds.Sum(refund => refund.Amount);
+        var refundableAmount = Math.Max(0, transaction.Amount - refundedAmount);
+        var canRefund =
+            (transaction.Status is TransactionStatus.Approved or TransactionStatus.PartiallyRefunded)
+            && refundableAmount > 0;
+
         return new TransactionDto
         {
             Id = transaction.Id,
@@ -491,7 +517,11 @@ public class TransactionService
             DeclineReason = transaction.DeclineReason
                 ?? (transaction.Status == TransactionStatus.Declined ? decisionMessage : null),
             IdempotencyKey = transaction.IdempotencyKey,
-            IsReplay = isReplay
+            IsReplay = isReplay,
+            RefundedAmount = refundedAmount,
+            RefundableAmount = refundableAmount,
+            CanRefund = canRefund,
+            Refunds = refunds
         };
     }
 
