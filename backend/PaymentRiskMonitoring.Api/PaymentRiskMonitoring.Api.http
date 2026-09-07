@@ -235,6 +235,21 @@ Idempotency-Key: demo-payment-key-001
 }
 
 ###
+### Create elevated-risk payment (HIGH_AMOUNT foundation signal, Medium)
+POST {{baseUrl}}/api/transactions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "merchantId": "{{merchantId}}",
+  "cardId": "{{cardId}}",
+  "amount": 10000,
+  "currency": "TRY",
+  "paymentType": "Online",
+  "idempotencyKey": "demo-high-amount-001"
+}
+
+###
 ### List refunds for a transaction
 GET {{baseUrl}}/api/transactions/{{transactionId}}/refunds
 Authorization: Bearer {{accessToken}}

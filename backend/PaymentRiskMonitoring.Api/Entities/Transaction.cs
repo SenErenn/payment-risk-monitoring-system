@@ -1,4 +1,5 @@
 using PaymentRiskMonitoring.Api.Enums;
+using PaymentRiskMonitoring.Api.Models.Risk;
 
 namespace PaymentRiskMonitoring.Api.Entities;
 
@@ -23,6 +24,11 @@ public class Transaction
     public int RiskScore { get; set; }
 
     public RiskLevel RiskLevel { get; set; }
+
+    /// <summary>
+    /// Structured risk reason codes/messages produced by <c>RiskAnalysisService</c>.
+    /// </summary>
+    public List<RiskReason> RiskReasons { get; set; } = [];
 
     /// <summary>
     /// Persisted approve/decline explanation shown on detail screens.

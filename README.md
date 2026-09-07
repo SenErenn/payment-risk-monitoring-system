@@ -176,7 +176,10 @@ Transaction API (PR-013 / PR-016):
 - Validates merchant/card, generates `TransactionCode`, checks amount/currency
 - Basic decision: Approved or Declined (inactive merchant, non-active card, insufficient limit)
 - Approved payments reduce card available limit
-- Basic risk score/level placeholders only (full risk engine later)
+- Risk analysis via `RiskAnalysisService` (PR-020): `RiskScore`, `RiskLevel`, `RiskReasons`
+- Score bands: 0–39 Low, 40–69 Medium, 70–100 High
+- Foundation signals: merchant/card/limit declines + high amount / high limit usage on approvals
+- Advanced risk rules arrive in PR-021
 
 Payment Simulator UI arrives in PR-014.
 
@@ -245,6 +248,15 @@ Payment Simulator UI arrives in PR-014.
 - Refund history table on the transaction detail page
 - Status chips and decision panel reflect `PartiallyRefunded` / `Refunded`
 
+### Risk Analysis Engine (PR-020)
+
+- Central `RiskAnalysisService` produces `RiskScore`, `RiskLevel`, and `RiskReasons` on each payment
+- Reasons persisted as JSONB on `Transactions` and returned on list/detail DTOs
+- Score bands: Low (0–39), Medium (40–69), High (70–100)
+- Foundation signals: inactive merchant, non-active card, insufficient limit, high amount (≥ 10,000), high limit usage (≥ 80%)
+- Transaction detail UI lists risk reason codes/messages
+- Advanced rules (velocity, night patterns, etc.) arrive in PR-021
+
 ### PostgreSQL
 
 ```bash
@@ -299,7 +311,8 @@ This project is built incrementally across 30 PRs.
 | i18n    | Done   | Turkish / English UI support     |
 | PR-018  | Done   | Refund backend                   |
 | PR-019  | Done   | Refund frontend                  |
-| PR-020+ | —      | See project plan for details   |
+| PR-020  | Done   | Risk analysis engine             |
+| PR-021+ | —      | See project plan for details   |
 
 ## License
 

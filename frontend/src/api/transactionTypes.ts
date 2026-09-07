@@ -26,6 +26,7 @@ export interface Transaction {
   paymentType: PaymentType
   riskScore: number
   riskLevel: RiskLevel
+  riskReasons?: RiskReason[]
   createdAt: string
   decisionMessage: string | null
   declineReason: string | null
@@ -35,6 +36,11 @@ export interface Transaction {
   refundableAmount: number
   canRefund: boolean
   refunds: RefundSummary[]
+}
+
+export interface RiskReason {
+  code: string
+  message: string
 }
 
 export interface RefundSummary {

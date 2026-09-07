@@ -49,6 +49,7 @@ builder.Services.AddScoped<MerchantService>();
 builder.Services.AddScoped<CardService>();
 builder.Services.AddScoped<TransactionService>();
 builder.Services.AddScoped<RefundService>();
+builder.Services.AddScoped<RiskAnalysisService>();
 
 if (builder.Environment.IsDevelopment())
 {

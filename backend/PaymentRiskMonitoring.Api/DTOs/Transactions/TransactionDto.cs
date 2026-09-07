@@ -1,5 +1,6 @@
 using PaymentRiskMonitoring.Api.DTOs.Refunds;
 using PaymentRiskMonitoring.Api.Enums;
+using PaymentRiskMonitoring.Api.Models.Risk;
 
 namespace PaymentRiskMonitoring.Api.DTOs.Transactions;
 
@@ -32,6 +33,8 @@ public class TransactionDto
     public int RiskScore { get; init; }
 
     public RiskLevel RiskLevel { get; init; }
+
+    public IReadOnlyList<RiskReason> RiskReasons { get; init; } = Array.Empty<RiskReason>();
 
     public DateTime CreatedAt { get; init; }
 

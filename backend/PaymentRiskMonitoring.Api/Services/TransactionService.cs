@@ -14,10 +14,12 @@ public class TransactionService
     public static readonly TimeSpan DuplicateWindow = TimeSpan.FromSeconds(30);
 
     private readonly AppDbContext _dbContext;
+    private readonly RiskAnalysisService _riskAnalysisService;
 
-    public TransactionService(AppDbContext dbContext)
+    public TransactionService(AppDbContext dbContext, RiskAnalysisService riskAnalysisService)
     {
         _dbContext = dbContext;
+        _riskAnalysisService = riskAnalysisService;
     }
 
     public async Task<PagedResult<TransactionDto>> GetTransactionsAsync(
@@ -194,18 +196,14 @@ public class TransactionService
                 throw new NotFoundException("Card", request.CardId);
             }
 
-            var decision = EvaluatePayment(merchant, card, amount);
+            var decision = _riskAnalysisService.AnalyzePayment(merchant, card, amount);
 
             if (decision.Status == TransactionStatus.Approved)
             {
                 // Re-check after lock; never reduce limit on declines.
                 if (amount > card.AvailableLimit)
                 {
-                    decision = new PaymentDecision(
-                        TransactionStatus.Declined,
-                        RiskScore: 70,
-                        RiskLevel.High,
-                        "Declined: insufficient available limit.");
+                    decision = _riskAnalysisService.CreateInsufficientLimitResult();
                 }
                 else
                 {
@@ -227,9 +225,10 @@ public class TransactionService
                 PaymentType = request.PaymentType,
                 RiskScore = decision.RiskScore,
                 RiskLevel = decision.RiskLevel,
-                DecisionReason = decision.Message,
+                RiskReasons = decision.RiskReasons.ToList(),
+                DecisionReason = decision.DecisionMessage,
                 DeclineReason = decision.Status == TransactionStatus.Declined
-                    ? decision.Message
+                    ? decision.DecisionMessage
                     : null,
                 IdempotencyKey = idempotencyKey,
                 CreatedAt = now,
@@ -408,56 +407,6 @@ public class TransactionService
         return key.Trim();
     }
 
-    private static PaymentDecision EvaluatePayment(Merchant merchant, Card card, decimal amount)
-    {
-        if (!merchant.IsActive)
-        {
-            return new PaymentDecision(
-                TransactionStatus.Declined,
-                RiskScore: 75,
-                RiskLevel.High,
-                "Declined: merchant is inactive.");
-        }
-
-        if (card.Status != CardStatus.Active)
-        {
-            return new PaymentDecision(
-                TransactionStatus.Declined,
-                RiskScore: 80,
-                RiskLevel.High,
-                $"Declined: card status is {card.Status}.");
-        }
-
-        if (amount > card.AvailableLimit)
-        {
-            return new PaymentDecision(
-                TransactionStatus.Declined,
-                RiskScore: 70,
-                RiskLevel.High,
-                "Declined: insufficient available limit.");
-        }
-
-        // Basic placeholder risk signal only — full risk engine comes later (PR-020+).
-        var usageRatio = card.CreditLimit <= 0
-            ? 0
-            : (card.CreditLimit - card.AvailableLimit + amount) / card.CreditLimit;
-
-        if (amount >= 10000m || usageRatio >= 0.8m)
-        {
-            return new PaymentDecision(
-                TransactionStatus.Approved,
-                RiskScore: 45,
-                RiskLevel.Medium,
-                "Approved with elevated basic risk signal.");
-        }
-
-        return new PaymentDecision(
-            TransactionStatus.Approved,
-            RiskScore: 15,
-            RiskLevel.Low,
-            "Approved.");
-    }
-
     private static string GenerateTransactionCode()
     {
         return $"TXN_{Guid.NewGuid():N}".ToUpperInvariant();
@@ -512,6 +461,7 @@ public class TransactionService
             PaymentType = transaction.PaymentType,
             RiskScore = transaction.RiskScore,
             RiskLevel = transaction.RiskLevel,
+            RiskReasons = transaction.RiskReasons?.ToList() ?? [],
             CreatedAt = transaction.CreatedAt,
             DecisionMessage = decisionMessage,
             DeclineReason = transaction.DeclineReason
@@ -524,10 +474,4 @@ public class TransactionService
             Refunds = refunds
         };
     }
-
-    private sealed record PaymentDecision(
-        TransactionStatus Status,
-        int RiskScore,
-        RiskLevel RiskLevel,
-        string Message);
 }

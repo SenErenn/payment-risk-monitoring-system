@@ -613,6 +613,35 @@
   margin: 0;
 }
 
+.risk-reasons {
+  margin-top: 0.75rem;
+}
+
+.risk-reasons strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.risk-reasons ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.risk-reasons li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.risk-reasons .mono-text {
+  font-weight: 600;
+}
+
 .filter-chips {
   display: flex;
   flex-wrap: wrap;

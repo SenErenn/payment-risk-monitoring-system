@@ -1,11 +1,19 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PaymentRiskMonitoring.Api.Entities;
+using PaymentRiskMonitoring.Api.Models.Risk;
 
 namespace PaymentRiskMonitoring.Api.Data.Configurations;
 
 public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 {
+    private static readonly JsonSerializerOptions RiskReasonsJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     public void Configure(EntityTypeBuilder<Transaction> builder)
     {
         builder.ToTable("Transactions");
@@ -38,6 +46,13 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(transaction => transaction.RiskReasons)
+            .HasColumnType("jsonb")
+            .HasConversion(
+                reasons => JsonSerializer.Serialize(reasons, RiskReasonsJsonOptions),
+                json => DeserializeRiskReasons(json))
+            .Metadata.SetValueComparer(CreateRiskReasonsComparer());
+
         builder.Property(transaction => transaction.DecisionReason)
             .HasMaxLength(500)
             .IsRequired();
@@ -69,5 +84,27 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             transaction.PaymentType,
             transaction.CreatedAt
         });
+    }
+
+    private static List<RiskReason> DeserializeRiskReasons(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new List<RiskReason>();
+        }
+
+        return JsonSerializer.Deserialize<List<RiskReason>>(json, RiskReasonsJsonOptions)
+            ?? new List<RiskReason>();
+    }
+
+    private static ValueComparer<List<RiskReason>> CreateRiskReasonsComparer()
+    {
+        return new ValueComparer<List<RiskReason>>(
+            (left, right) =>
+                JsonSerializer.Serialize(left, RiskReasonsJsonOptions)
+                == JsonSerializer.Serialize(right, RiskReasonsJsonOptions),
+            value => JsonSerializer.Serialize(value, RiskReasonsJsonOptions).GetHashCode(),
+            value => DeserializeRiskReasons(
+                JsonSerializer.Serialize(value, RiskReasonsJsonOptions)));
     }
 }
