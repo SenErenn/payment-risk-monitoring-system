@@ -179,6 +179,7 @@ export const tr: Messages = {
     loadDetailFailed: 'İşlem yüklenemedi.',
     loadingDetail: 'İşlem yükleniyor...',
     riskScoreInline: '{level} · skor {score}',
+    riskReasons: 'Risk nedenleri',
     refundedAmount: 'İade edilen tutar',
     refundableAmount: 'İade edilebilir tutar',
     refundEligibility: 'İade uygunluğu',

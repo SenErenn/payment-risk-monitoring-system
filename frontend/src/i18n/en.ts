@@ -179,6 +179,7 @@ export const en: Messages = {
     loadDetailFailed: 'Unable to load transaction.',
     loadingDetail: 'Loading transaction...',
     riskScoreInline: '{level} · score {score}',
+    riskReasons: 'Risk reasons',
     refundedAmount: 'Refunded amount',
     refundableAmount: 'Refundable amount',
     refundEligibility: 'Refund eligibility',

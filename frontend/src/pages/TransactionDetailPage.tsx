@@ -237,6 +237,19 @@ export function TransactionDetailPage() {
         {transaction.status === 'Declined' && transaction.declineReason ? (
           <p className="form-hint">{t('transactions.declinePersisted')}</p>
         ) : null}
+        {transaction.riskReasons?.length ? (
+          <div className="risk-reasons">
+            <strong>{t('transactions.riskReasons')}</strong>
+            <ul>
+              {transaction.riskReasons.map((reason) => (
+                <li key={`${reason.code}-${reason.message}`}>
+                  <span className="mono-text">{reason.code}</span>
+                  <span>{reason.message}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
       <div className="info-grid">
