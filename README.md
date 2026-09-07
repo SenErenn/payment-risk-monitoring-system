@@ -267,6 +267,15 @@ Payment Simulator UI arrives in PR-014.
 - `SUDDEN_AMOUNT_INCREASE` — amount ≥ 3× average of last 3–5 approved amounts on the card (+20)
 - Score is the sum of matched rule points (capped at 100); no signals → `BASELINE` (15, Low)
 
+### Risk Alerts Backend (PR-022)
+
+- High-risk transactions automatically create an `Open` `RiskAlert` (one per transaction)
+- `GET /api/risk-alerts` — list with pagination, search, filters (`status`, `riskLevel`, merchant/card/transaction, date range), sorting
+- `GET /api/risk-alerts/open` — open alerts shortcut (`status=Open`)
+- `GET /api/risk-alerts/{id}` — alert detail with transaction/merchant/card context and risk reasons
+- Access: Admin and Analyst only
+- Analyst review status transitions arrive in PR-024; alert UI arrives in PR-023
+
 ### PostgreSQL
 
 ```bash
@@ -323,7 +332,8 @@ This project is built incrementally across 30 PRs.
 | PR-019  | Done   | Refund frontend                  |
 | PR-020  | Done   | Risk analysis engine             |
 | PR-021  | Done   | Advanced risk rules              |
-| PR-022+ | —      | See project plan for details   |
+| PR-022  | Done   | Risk alerts backend              |
+| PR-023+ | —      | See project plan for details   |
 
 ## License
 
