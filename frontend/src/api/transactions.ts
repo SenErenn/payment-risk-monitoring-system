@@ -1,7 +1,9 @@
 import { apiRequest } from './client'
 import type {
+  CreateRefundPayload,
   CreateTransactionPayload,
   PagedResult,
+  RefundSummary,
   Transaction,
   TransactionListParams,
 } from './transactionTypes'
@@ -76,4 +78,25 @@ export async function createTransaction(
     method: 'POST',
     body: payload,
   })
+}
+
+export async function listTransactionRefunds(
+  transactionId: string,
+): Promise<RefundSummary[]> {
+  return apiRequest<RefundSummary[]>(
+    `/api/transactions/${transactionId}/refunds`,
+  )
+}
+
+export async function createRefund(
+  transactionId: string,
+  payload: CreateRefundPayload,
+): Promise<RefundSummary> {
+  return apiRequest<RefundSummary>(
+    `/api/transactions/${transactionId}/refunds`,
+    {
+      method: 'POST',
+      body: payload,
+    },
+  )
 }

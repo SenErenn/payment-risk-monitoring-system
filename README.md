@@ -237,6 +237,14 @@ Payment Simulator UI arrives in PR-014.
 - Transaction DTO includes `refundedAmount`, `refundableAmount`, `canRefund`, `refunds`
 - Refund UI arrives in PR-019
 
+### Refund Frontend (PR-019)
+
+- Transaction detail shows refunded / refundable amounts and eligibility
+- Admin and Analyst can create full-remaining or partial refunds from the detail page
+- Viewer can review refund history (read-only)
+- Refund history table on the transaction detail page
+- Status chips and decision panel reflect `PartiallyRefunded` / `Refunded`
+
 ### PostgreSQL
 
 ```bash
@@ -290,7 +298,8 @@ This project is built incrementally across 30 PRs.
 | PR-017  | Done   | Transaction frontend filters     |
 | i18n    | Done   | Turkish / English UI support     |
 | PR-018  | Done   | Refund backend                   |
-| PR-019+ | —      | See project plan for details   |
+| PR-019  | Done   | Refund frontend                  |
+| PR-020+ | —      | See project plan for details   |
 
 ## License
 
