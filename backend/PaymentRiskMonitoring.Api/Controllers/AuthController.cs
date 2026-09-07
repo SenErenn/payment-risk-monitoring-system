@@ -73,6 +73,7 @@ public class AuthController : ControllerBase
             canManageMerchants = role == AppRoles.Admin,
             canReviewRiskAlerts = role is AppRoles.Admin or AppRoles.Analyst,
             canCreateTransactions = role is AppRoles.Admin or AppRoles.Analyst,
+            canCreateRefunds = role is AppRoles.Admin or AppRoles.Analyst,
             canViewTransactions = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
             canViewMerchants = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
             checkedAtUtc = DateTime.UtcNow

@@ -18,6 +18,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Transaction> Transactions => Set<Transaction>();
 
+    public DbSet<Refund> Refunds => Set<Refund>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
