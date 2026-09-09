@@ -190,6 +190,8 @@ public class RiskAlertService
         };
     }
 
+    public static RiskAlertDto ToDto(RiskAlert alert) => MapAlert(alert);
+
     private IQueryable<RiskAlert> BuildAlertQuery()
     {
         return _dbContext.RiskAlerts

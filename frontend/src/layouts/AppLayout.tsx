@@ -1,6 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { LanguageSwitcher, useT } from '../i18n'
+import { LiveConnectionBadge } from '../realtime'
 import { Sidebar } from './Sidebar'
 
 export function AppLayout() {
@@ -21,6 +22,7 @@ export function AppLayout() {
         <header className="topbar">
           <div className="topbar-left">
             <span className="topbar-title">{t('layout.operationsConsole')}</span>
+            <LiveConnectionBadge />
           </div>
 
           <div className="topbar-right">

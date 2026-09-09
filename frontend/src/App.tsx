@@ -5,6 +5,7 @@ import { PublicOnlyRoute } from './auth/PublicOnlyRoute'
 import { RoleRoute } from './auth/RoleRoute'
 import { LocaleProvider } from './i18n'
 import { AppLayout } from './layouts/AppLayout'
+import { RealtimeProvider } from './realtime'
 import { AccessDeniedPage } from './pages/AccessDeniedPage'
 import { CardDetailPage } from './pages/CardDetailPage'
 import { CardsPage } from './pages/CardsPage'
@@ -24,8 +25,9 @@ function App() {
   return (
     <LocaleProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
+        <RealtimeProvider>
+          <BrowserRouter>
+            <Routes>
             <Route element={<PublicOnlyRoute />}>
               <Route path="/login" element={<LoginPage />} />
             </Route>
@@ -87,7 +89,8 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </BrowserRouter>
+          </BrowserRouter>
+        </RealtimeProvider>
       </AuthProvider>
     </LocaleProvider>
   )

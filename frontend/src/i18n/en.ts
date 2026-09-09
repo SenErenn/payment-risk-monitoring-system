@@ -53,6 +53,13 @@ export const en: Messages = {
     operationsConsole: 'Operations Console',
     mainNav: 'Main',
   },
+  realtime: {
+    connected: 'Live',
+    connecting: 'Connecting…',
+    reconnecting: 'Reconnecting…',
+    disconnected: 'Offline',
+    hint: 'Real-time monitoring connection status',
+  },
   login: {
     title: 'Sign in',
     subtitle: 'Use your internal account to continue.',

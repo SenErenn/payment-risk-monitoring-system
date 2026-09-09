@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { getDashboardSummary } from '../api/dashboard'
 import type { DashboardSummary, NamedCount } from '../api/dashboardTypes'
 import { useAuth } from '../auth/AuthContext'
 import { useLocale, useT } from '../i18n'
+import { MonitoringEvents, useRealtimeEvent } from '../realtime'
 import { formatAmount, formatDateTime, riskLevelClass, transactionStatusClass } from './transactionUi'
 import type { RiskLevel, TransactionStatus } from '../api/transactionTypes'
 
@@ -58,12 +59,24 @@ export function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [liveTick, setLiveTick] = useState(0)
+  const silentReloadRef = useRef(false)
+
+  useRealtimeEvent(MonitoringEvents.TransactionCreated, () => {
+    silentReloadRef.current = true
+    setLiveTick((value) => value + 1)
+  })
 
   useEffect(() => {
     let cancelled = false
 
     async function load() {
-      setIsLoading(true)
+      const silent = silentReloadRef.current
+      silentReloadRef.current = false
+
+      if (!silent) {
+        setIsLoading(true)
+      }
       setError(null)
 
       try {
@@ -93,7 +106,7 @@ export function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [appliedFrom, appliedTo, t])
+  }, [appliedFrom, appliedTo, liveTick, t])
 
   function handleApplyFilters(event: FormEvent) {
     event.preventDefault()
