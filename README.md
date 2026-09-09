@@ -303,6 +303,14 @@ Payment Simulator UI arrives in PR-014.
 - `RiskAnalysisService` loads rules per payment; changes apply to new transactions immediately
 - Foundation declines and score bands remain hardcoded
 
+### Dashboard + Reporting (PR-026)
+
+- `GET /api/dashboard/summary?from&to` — StaffRead (Admin/Analyst/Viewer); default window last 24 hours UTC
+- KPIs: total transactions, volume, approved, declined, high risk, open alerts, approval rate, average amount
+- Charts: hourly volume, status distribution, risk distribution, top merchants by volume
+- Dashboard UI replaces the welcome placeholder; date-range filter applies to all widgets
+- Approval rate = Approved / (Approved + Declined)
+
 ### PostgreSQL
 
 ```bash
@@ -365,7 +373,8 @@ This project is built incrementally across 30 PRs.
 | PR-023  | Done   | Risk alerts frontend             |
 | PR-024  | Done   | Analyst review workflow          |
 | PR-025  | Done   | Risk rules admin management      |
-| PR-026+ | —      | See project plan for details   |
+| PR-026  | Done   | Dashboard + reporting            |
+| PR-027+ | —      | See project plan for details   |
 
 ## License
 
