@@ -26,6 +26,9 @@ public class RiskAlertConfiguration : IEntityTypeConfiguration<RiskAlert>
             .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(alert => alert.AnalystNotes)
+            .HasMaxLength(1000);
+
         builder.HasIndex(alert => alert.AlertCode)
             .IsUnique();
 
@@ -35,10 +38,16 @@ public class RiskAlertConfiguration : IEntityTypeConfiguration<RiskAlert>
         builder.HasIndex(alert => alert.Status);
         builder.HasIndex(alert => alert.RiskLevel);
         builder.HasIndex(alert => alert.CreatedAt);
+        builder.HasIndex(alert => alert.ReviewedByUserId);
 
         builder.HasOne(alert => alert.Transaction)
             .WithOne(transaction => transaction.RiskAlert)
             .HasForeignKey<RiskAlert>(alert => alert.TransactionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(alert => alert.ReviewedByUser)
+            .WithMany()
+            .HasForeignKey(alert => alert.ReviewedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

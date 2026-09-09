@@ -30,8 +30,18 @@ export interface RiskAlert {
   riskScore: number
   riskReasons: RiskReason[]
   status: AlertStatus
+  analystNotes: string | null
+  reviewedByUserId: string | null
+  reviewedByName: string | null
+  reviewedByEmail: string | null
+  reviewedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface ReviewRiskAlertRequest {
+  status: AlertStatus
+  analystNotes?: string
 }
 
 export type RiskAlertSortBy =

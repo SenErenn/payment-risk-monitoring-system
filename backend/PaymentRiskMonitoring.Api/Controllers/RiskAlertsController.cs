@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PaymentRiskMonitoring.Api.Authorization;
 using PaymentRiskMonitoring.Api.DTOs.RiskAlerts;
 using PaymentRiskMonitoring.Api.Enums;
+using PaymentRiskMonitoring.Api.Exceptions;
 using PaymentRiskMonitoring.Api.Models.Responses;
 using PaymentRiskMonitoring.Api.Services;
 
@@ -46,5 +48,33 @@ public class RiskAlertsController : ControllerBase
     {
         var alert = await _riskAlertService.GetAlertByIdAsync(id, cancellationToken);
         return Ok(ApiResponse<RiskAlertDto>.Ok(alert, "Risk alert retrieved."));
+    }
+
+    [HttpPost("{id:guid}/review")]
+    public async Task<ActionResult<ApiResponse<RiskAlertDto>>> ReviewAlert(
+        Guid id,
+        [FromBody] ReviewRiskAlertRequest request,
+        CancellationToken cancellationToken)
+    {
+        var alert = await _riskAlertService.ReviewAlertAsync(
+            id,
+            request,
+            GetCurrentUserId(),
+            cancellationToken);
+
+        return Ok(ApiResponse<RiskAlertDto>.Ok(alert, "Risk alert review saved."));
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+        {
+            throw new UnauthorizedException("Invalid authentication token.");
+        }
+
+        return userId;
     }
 }

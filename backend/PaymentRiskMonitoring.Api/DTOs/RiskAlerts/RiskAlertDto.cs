@@ -37,6 +37,16 @@ public class RiskAlertDto
 
     public AlertStatus Status { get; init; }
 
+    public string? AnalystNotes { get; init; }
+
+    public Guid? ReviewedByUserId { get; init; }
+
+    public string? ReviewedByName { get; init; }
+
+    public string? ReviewedByEmail { get; init; }
+
+    public DateTime? ReviewedAt { get; init; }
+
     public DateTime CreatedAt { get; init; }
 
     public DateTime UpdatedAt { get; init; }
