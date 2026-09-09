@@ -274,7 +274,7 @@ Payment Simulator UI arrives in PR-014.
 - `GET /api/risk-alerts/open` — open alerts shortcut (`status=Open`)
 - `GET /api/risk-alerts/{id}` — alert detail with transaction/merchant/card context and risk reasons
 - Access: Admin and Analyst only
-- Analyst review status transitions arrive in PR-024; alert UI arrives in PR-023
+- Analyst review workflow added in PR-024
 
 ### Risk Alerts Frontend (PR-023)
 
@@ -283,6 +283,15 @@ Payment Simulator UI arrives in PR-014.
 - `/risk-alerts/:id` detail with risk reasons, transaction/merchant/card links
 - Status and risk level badges (High / Medium / Low visuals)
 - Replaces the previous placeholder screen
+
+### Analyst Review Workflow (PR-024)
+
+- Status transitions: `Open` → `UnderReview` → `Safe` / `Suspicious` / `Closed` (terminal)
+- `POST /api/risk-alerts/{id}/review` — Admin/Analyst; body `{ status, analystNotes }`
+- Review audit fields: `AnalystNotes`, `ReviewedByUserId`, `ReviewedAt` (+ reviewer name/email on DTO)
+- Notes required when deciding Safe / Suspicious / Closed
+- Detail UI: start review, decision actions, notes, who/when reviewed
+- List shows reviewer name and review time when available
 
 ### PostgreSQL
 
@@ -342,7 +351,8 @@ This project is built incrementally across 30 PRs.
 | PR-021  | Done   | Advanced risk rules              |
 | PR-022  | Done   | Risk alerts backend              |
 | PR-023  | Done   | Risk alerts frontend             |
-| PR-024+ | —      | See project plan for details   |
+| PR-024  | Done   | Analyst review workflow          |
+| PR-025+ | —      | See project plan for details   |
 
 ## License
 

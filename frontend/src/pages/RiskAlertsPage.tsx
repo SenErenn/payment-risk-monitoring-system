@@ -318,6 +318,7 @@ export function RiskAlertsPage() {
                   <th>{t('riskAlerts.colAmount')}</th>
                   <th>{t('riskAlerts.colRisk')}</th>
                   <th>{t('common.status')}</th>
+                  <th>{t('riskAlerts.colReviewedBy')}</th>
                   <th>{t('riskAlerts.colCreated')}</th>
                 </tr>
               </thead>
@@ -354,6 +355,22 @@ export function RiskAlertsPage() {
                       <span className={alertStatusClass(alert.status)}>
                         {t(`status.${alert.status}`)}
                       </span>
+                    </td>
+                    <td>
+                      {alert.reviewedByName ? (
+                        <>
+                          <div>{alert.reviewedByName}</div>
+                          {alert.reviewedAt ? (
+                            <span className="muted-text">
+                              {formatDateTime(alert.reviewedAt, dateLocale)}
+                            </span>
+                          ) : null}
+                        </>
+                      ) : (
+                        <span className="muted-text">
+                          {t('riskAlerts.notReviewedYet')}
+                        </span>
+                      )}
                     </td>
                     <td>{formatDateTime(alert.createdAt, dateLocale)}</td>
                   </tr>

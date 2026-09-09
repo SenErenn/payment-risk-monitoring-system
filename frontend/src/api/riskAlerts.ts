@@ -1,6 +1,7 @@
 import { apiRequest } from './client'
 import type {
   PagedResult,
+  ReviewRiskAlertRequest,
   RiskAlert,
   RiskAlertListParams,
 } from './riskAlertTypes'
@@ -69,4 +70,14 @@ export async function listOpenRiskAlerts(
 
 export async function getRiskAlert(id: string): Promise<RiskAlert> {
   return apiRequest<RiskAlert>(`/api/risk-alerts/${id}`)
+}
+
+export async function reviewRiskAlert(
+  id: string,
+  payload: ReviewRiskAlertRequest,
+): Promise<RiskAlert> {
+  return apiRequest<RiskAlert>(`/api/risk-alerts/${id}/review`, {
+    method: 'POST',
+    body: payload,
+  })
 }

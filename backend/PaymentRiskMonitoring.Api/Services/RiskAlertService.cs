@@ -10,6 +10,17 @@ namespace PaymentRiskMonitoring.Api.Services;
 
 public class RiskAlertService
 {
+    private static readonly Dictionary<AlertStatus, HashSet<AlertStatus>> AllowedTransitions = new()
+    {
+        [AlertStatus.Open] = [AlertStatus.UnderReview],
+        [AlertStatus.UnderReview] =
+        [
+            AlertStatus.Safe,
+            AlertStatus.Suspicious,
+            AlertStatus.Closed
+        ]
+    };
+
     private readonly AppDbContext _dbContext;
 
     public RiskAlertService(AppDbContext dbContext)
@@ -21,13 +32,7 @@ public class RiskAlertService
         RiskAlertListQuery query,
         CancellationToken cancellationToken = default)
     {
-        var alertsQuery = _dbContext.RiskAlerts
-            .AsNoTracking()
-            .Include(alert => alert.Transaction)
-                .ThenInclude(transaction => transaction.Merchant)
-            .Include(alert => alert.Transaction)
-                .ThenInclude(transaction => transaction.Card)
-            .AsQueryable();
+        var alertsQuery = BuildAlertQuery();
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -105,18 +110,66 @@ public class RiskAlertService
         Guid id,
         CancellationToken cancellationToken = default)
     {
-        var alert = await _dbContext.RiskAlerts
-            .AsNoTracking()
-            .Include(item => item.Transaction)
-                .ThenInclude(transaction => transaction.Merchant)
-            .Include(item => item.Transaction)
-                .ThenInclude(transaction => transaction.Card)
+        var alert = await BuildAlertQuery()
             .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (alert is null)
         {
             throw new NotFoundException("RiskAlert", id);
         }
+
+        return MapAlert(alert);
+    }
+
+    public async Task<RiskAlertDto> ReviewAlertAsync(
+        Guid id,
+        ReviewRiskAlertRequest request,
+        Guid reviewerUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var alert = await _dbContext.RiskAlerts
+            .Include(item => item.Transaction)
+                .ThenInclude(transaction => transaction.Merchant)
+            .Include(item => item.Transaction)
+                .ThenInclude(transaction => transaction.Card)
+            .Include(item => item.ReviewedByUser)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (alert is null)
+        {
+            throw new NotFoundException("RiskAlert", id);
+        }
+
+        if (!IsTransitionAllowed(alert.Status, request.Status))
+        {
+            throw new ValidationException(
+                "Risk alert status transition is not allowed.",
+                [
+                    $"Cannot change status from {alert.Status} to {request.Status}."
+                ]);
+        }
+
+        var reviewer = await _dbContext.Users
+            .FindAsync([reviewerUserId], cancellationToken);
+
+        if (reviewer is null)
+        {
+            throw new UnauthorizedException("Invalid authentication token.");
+        }
+
+        var utcNow = DateTime.UtcNow;
+        var notes = string.IsNullOrWhiteSpace(request.AnalystNotes)
+            ? null
+            : request.AnalystNotes.Trim();
+
+        alert.Status = request.Status;
+        alert.AnalystNotes = notes;
+        alert.ReviewedByUserId = reviewerUserId;
+        alert.ReviewedAt = utcNow;
+        alert.UpdatedAt = utcNow;
+        alert.ReviewedByUser = reviewer;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return MapAlert(alert);
     }
@@ -135,6 +188,23 @@ public class RiskAlertService
             UpdatedAt = utcNow,
             Transaction = transaction
         };
+    }
+
+    private IQueryable<RiskAlert> BuildAlertQuery()
+    {
+        return _dbContext.RiskAlerts
+            .AsNoTracking()
+            .Include(alert => alert.Transaction)
+                .ThenInclude(transaction => transaction.Merchant)
+            .Include(alert => alert.Transaction)
+                .ThenInclude(transaction => transaction.Card)
+            .Include(alert => alert.ReviewedByUser);
+    }
+
+    private static bool IsTransitionAllowed(AlertStatus current, AlertStatus next)
+    {
+        return AllowedTransitions.TryGetValue(current, out var allowed)
+            && allowed.Contains(next);
     }
 
     private static IQueryable<RiskAlert> ApplySorting(
@@ -183,6 +253,7 @@ public class RiskAlertService
     private static RiskAlertDto MapAlert(RiskAlert alert)
     {
         var transaction = alert.Transaction;
+        var reviewer = alert.ReviewedByUser;
 
         return new RiskAlertDto
         {
@@ -202,6 +273,13 @@ public class RiskAlertService
             RiskScore = alert.RiskScore,
             RiskReasons = transaction.RiskReasons?.ToList() ?? [],
             Status = alert.Status,
+            AnalystNotes = alert.AnalystNotes,
+            ReviewedByUserId = alert.ReviewedByUserId,
+            ReviewedByName = reviewer is null
+                ? null
+                : $"{reviewer.FirstName} {reviewer.LastName}".Trim(),
+            ReviewedByEmail = reviewer?.Email,
+            ReviewedAt = alert.ReviewedAt,
             CreatedAt = alert.CreatedAt,
             UpdatedAt = alert.UpdatedAt
         };

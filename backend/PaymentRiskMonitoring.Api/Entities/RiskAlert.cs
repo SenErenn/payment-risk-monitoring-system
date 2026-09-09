@@ -16,9 +16,17 @@ public class RiskAlert
 
     public AlertStatus Status { get; set; } = AlertStatus.Open;
 
+    public string? AnalystNotes { get; set; }
+
+    public Guid? ReviewedByUserId { get; set; }
+
+    public DateTime? ReviewedAt { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
     public Transaction Transaction { get; set; } = null!;
+
+    public User? ReviewedByUser { get; set; }
 }
