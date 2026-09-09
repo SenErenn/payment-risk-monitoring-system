@@ -48,3 +48,21 @@ export interface UpdateCardPayload {
 export interface UpdateCardStatusPayload {
   status: CardStatus
 }
+
+export interface AnalyticsRangeParams {
+  from?: string | null
+  to?: string | null
+}
+
+export interface CardAnalytics {
+  cardId: string
+  fromUtc: string
+  toUtc: string
+  spending: number
+  currency: string
+  transactionCount: number
+  declinedCount: number
+  riskAlertCount: number
+  availableLimit: number
+  creditLimit: number
+}

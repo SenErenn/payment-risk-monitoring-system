@@ -1,6 +1,8 @@
 import { apiRequest } from './client'
 import type {
+  AnalyticsRangeParams,
   Card,
+  CardAnalytics,
   CardListParams,
   CreateCardPayload,
   PagedResult,
@@ -37,6 +39,23 @@ export async function listCards(
 
 export async function getCard(id: string): Promise<Card> {
   return apiRequest<Card>(`/api/cards/${id}`)
+}
+
+export async function getCardAnalytics(
+  id: string,
+  params: AnalyticsRangeParams = {},
+): Promise<CardAnalytics> {
+  const query = new URLSearchParams()
+  if (params.from) {
+    query.set('from', params.from)
+  }
+  if (params.to) {
+    query.set('to', params.to)
+  }
+  const suffix = query.toString()
+  return apiRequest<CardAnalytics>(
+    `/api/cards/${id}/analytics${suffix ? `?${suffix}` : ''}`,
+  )
 }
 
 export async function createCard(payload: CreateCardPayload): Promise<Card> {

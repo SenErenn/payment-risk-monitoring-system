@@ -5,11 +5,20 @@ import {
   activateMerchant,
   deactivateMerchant,
   getMerchant,
+  getMerchantAnalytics,
   updateMerchant,
 } from '../api/merchants'
-import type { Merchant } from '../api/merchantTypes'
+import type { Merchant, MerchantAnalytics } from '../api/merchantTypes'
+import { listTransactions } from '../api/transactions'
+import type { Transaction } from '../api/transactionTypes'
 import { useAuth } from '../auth/AuthContext'
 import { useLocale, useT } from '../i18n'
+import { defaultLast24HoursLocal, formatPercent } from './dateRangeUi'
+import {
+  formatAmount,
+  formatDateTime,
+  transactionStatusClass,
+} from './transactionUi'
 
 export function MerchantDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,7 +28,9 @@ export function MerchantDetailPage() {
   const { locale } = useLocale()
   const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-US'
   const canManage = hasRole('Admin')
+  const canOpenAlerts = hasRole('Admin', 'Analyst')
 
+  const initialRange = defaultLast24HoursLocal()
   const [merchant, setMerchant] = useState<Merchant | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -29,6 +40,19 @@ export function MerchantDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isToggling, setIsToggling] = useState(false)
+  const [fromLocal, setFromLocal] = useState(initialRange.fromLocal)
+  const [toLocal, setToLocal] = useState(initialRange.toLocal)
+  const [appliedFrom, setAppliedFrom] = useState(initialRange.fromLocal)
+  const [appliedTo, setAppliedTo] = useState(initialRange.toLocal)
+  const [analytics, setAnalytics] = useState<MerchantAnalytics | null>(null)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false)
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
+    [],
+  )
+  const [transactionsError, setTransactionsError] = useState<string | null>(
+    null,
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -72,6 +96,77 @@ export function MerchantDetailPage() {
       cancelled = true
     }
   }, [id, t])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAnalytics() {
+      if (!id) {
+        return
+      }
+
+      setIsAnalyticsLoading(true)
+      setAnalyticsError(null)
+
+      try {
+        const data = await getMerchantAnalytics(id, {
+          from: new Date(appliedFrom).toISOString(),
+          to: new Date(appliedTo).toISOString(),
+        })
+        if (!cancelled) {
+          setAnalytics(data)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setAnalytics(null)
+          setAnalyticsError(
+            err instanceof ApiError
+              ? err.message
+              : t('merchants.analyticsLoadFailed'),
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setIsAnalyticsLoading(false)
+        }
+      }
+    }
+
+    async function loadRecentTransactions() {
+      if (!id) {
+        return
+      }
+
+      setTransactionsError(null)
+
+      try {
+        const page = await listTransactions({
+          page: 1,
+          pageSize: 5,
+          merchantId: id,
+        })
+        if (!cancelled) {
+          setRecentTransactions(page.items)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setRecentTransactions([])
+          setTransactionsError(
+            err instanceof ApiError
+              ? err.message
+              : t('merchants.loadTxFailed'),
+          )
+        }
+      }
+    }
+
+    void loadAnalytics()
+    void loadRecentTransactions()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id, appliedFrom, appliedTo, t])
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -205,6 +300,100 @@ export function MerchantDetailPage() {
 
       {actionError ? <div className="form-error">{actionError}</div> : null}
 
+      <form
+        className="filter-panel"
+        onSubmit={(event) => {
+          event.preventDefault()
+          setAppliedFrom(fromLocal)
+          setAppliedTo(toLocal)
+        }}
+      >
+        <h2>{t('merchants.analyticsTitle')}</h2>
+        <p className="form-hint">{t('merchants.analyticsHint')}</p>
+        <div className="form-grid form-grid-filters">
+          <label htmlFor="merchantAnalyticsFrom">
+            {t('dashboard.from')}
+            <input
+              id="merchantAnalyticsFrom"
+              type="datetime-local"
+              value={fromLocal}
+              onChange={(event) => setFromLocal(event.target.value)}
+            />
+          </label>
+          <label htmlFor="merchantAnalyticsTo">
+            {t('dashboard.to')}
+            <input
+              id="merchantAnalyticsTo"
+              type="datetime-local"
+              value={toLocal}
+              onChange={(event) => setToLocal(event.target.value)}
+            />
+          </label>
+        </div>
+        <button type="submit" className="primary-button">
+          {t('common.applyFilters')}
+        </button>
+      </form>
+
+      {analyticsError ? <div className="form-error">{analyticsError}</div> : null}
+      {isAnalyticsLoading ? (
+        <div className="notice-card">
+          <p>{t('merchants.analyticsLoading')}</p>
+        </div>
+      ) : null}
+
+      {!isAnalyticsLoading && analytics ? (
+        <>
+          <p className="muted-text dashboard-range-meta">
+            {t('dashboard.rangeMeta', {
+              from: formatDateTime(analytics.fromUtc, dateLocale),
+              to: formatDateTime(analytics.toUtc, dateLocale),
+            })}
+          </p>
+          <div className="info-grid kpi-grid">
+            <div className="info-card">
+              <span className="info-label">{t('merchants.kpiVolume')}</span>
+              <strong>
+                {formatAmount(analytics.volume, analytics.currency)}
+              </strong>
+            </div>
+            <div className="info-card">
+              <span className="info-label">{t('merchants.kpiTxCount')}</span>
+              <strong>{analytics.transactionCount}</strong>
+            </div>
+            <div className="info-card">
+              <span className="info-label">{t('merchants.kpiApprovalRate')}</span>
+              <strong>
+                {formatPercent(analytics.approvalRate, dateLocale)}
+              </strong>
+            </div>
+            <div className="info-card">
+              <span className="info-label">{t('merchants.kpiRiskCount')}</span>
+              <strong>{analytics.riskAlertCount}</strong>
+              <div className="muted-text">
+                {t('merchants.kpiHighRisk', { count: analytics.highRiskCount })}
+              </div>
+            </div>
+          </div>
+          <div className="action-row detail-links">
+            <Link
+              className="text-link"
+              to={`/transactions?merchantId=${merchant.id}`}
+            >
+              {t('merchants.viewTransactions')}
+            </Link>
+            {canOpenAlerts ? (
+              <Link
+                className="text-link"
+                to={`/risk-alerts?merchantId=${merchant.id}`}
+              >
+                {t('merchants.viewAlerts')}
+              </Link>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+
       <div className="info-grid">
         <div className="info-card">
           <span className="info-label">{t('merchants.colCode')}</span>
@@ -271,6 +460,50 @@ export function MerchantDetailPage() {
           </button>
         </form>
       ) : null}
+
+      <div className="notice-card">
+        <h2>{t('merchants.recentTitle')}</h2>
+        {transactionsError ? (
+          <div className="form-error">{transactionsError}</div>
+        ) : null}
+        {recentTransactions.length === 0 ? (
+          <p>{t('merchants.noTx')}</p>
+        ) : (
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{t('transactions.colCode')}</th>
+                  <th>{t('transactions.colAmount')}</th>
+                  <th>{t('transactions.colStatus')}</th>
+                  <th>{t('transactions.colCreated')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentTransactions.map((tx) => (
+                  <tr key={tx.id}>
+                    <td>
+                      <Link
+                        className="text-link mono-text"
+                        to={`/transactions/${tx.id}`}
+                      >
+                        {tx.transactionCode}
+                      </Link>
+                    </td>
+                    <td>{formatAmount(tx.amount, tx.currency)}</td>
+                    <td>
+                      <span className={transactionStatusClass(tx.status)}>
+                        {t(`status.${tx.status}`)}
+                      </span>
+                    </td>
+                    <td>{formatDateTime(tx.createdAt, dateLocale)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {!canManage ? (
         <div className="notice-card">

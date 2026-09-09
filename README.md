@@ -311,6 +311,13 @@ Payment Simulator UI arrives in PR-014.
 - Dashboard UI replaces the welcome placeholder; date-range filter applies to all widgets
 - Approval rate = Approved / (Approved + Declined)
 
+### Merchant / Card Analytics (PR-027)
+
+- `GET /api/merchants/{id}/analytics?from&to` — StaffRead; volume, tx count, approval rate, risk alert/high-risk counts
+- `GET /api/cards/{id}/analytics?from&to` — AnalystOrAdmin; spending, declines, risk alerts, available/credit limit
+- Merchant and card detail pages show date-ranged KPI cards plus deep links to transactions/alerts
+- Default analytics window: last 24 hours UTC
+
 ### PostgreSQL
 
 ```bash
@@ -374,7 +381,8 @@ This project is built incrementally across 30 PRs.
 | PR-024  | Done   | Analyst review workflow          |
 | PR-025  | Done   | Risk rules admin management      |
 | PR-026  | Done   | Dashboard + reporting            |
-| PR-027+ | —      | See project plan for details   |
+| PR-027  | Done   | Merchant / card analytics        |
+| PR-028+ | —      | See project plan for details   |
 
 ## License
 
