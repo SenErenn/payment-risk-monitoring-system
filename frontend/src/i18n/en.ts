@@ -122,6 +122,7 @@ export const en: Messages = {
     auditLogsTitle: 'Audit Logs',
     auditLogsDesc: 'Track sensitive actions across the console.',
     laterPr: 'a later PR',
+    outOfScope: 'a future release (out of scope for v1)',
   },
   auditLogs: {
     title: 'Audit Logs',

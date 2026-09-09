@@ -18,27 +18,10 @@ UI brand name: **PayScope**
 ```text
 payment-risk-monitoring-system/
 ├── backend/
-│   └── PaymentRiskMonitoring.Api/
-│       ├── Authorization/
-│       ├── Controllers/
-│       ├── Data/
-│       ├── DTOs/
-│       ├── Entities/
-│       ├── Enums/
-│       ├── Exceptions/
-│       ├── Extensions/
-│       ├── Middleware/
-│       ├── Models/
-│       ├── Options/
-│       ├── Services/
-│       └── Validators/
+│   ├── PaymentRiskMonitoring.Api/
+│   └── PaymentRiskMonitoring.Api.Tests/
 ├── frontend/
 │   └── src/
-│       ├── api/
-│       ├── auth/
-│       ├── layouts/
-│       ├── navigation/
-│       └── pages/
 ├── PaymentRiskMonitoring.slnx
 ├── docker-compose.yml
 ├── .env.example
@@ -53,7 +36,7 @@ payment-risk-monitoring-system/
 
 ## Getting Started
 
-### Backend
+### Option A — Local (recommended for development)
 
 ```bash
 docker compose up -d postgres
@@ -61,10 +44,75 @@ cd backend/PaymentRiskMonitoring.Api
 dotnet run --launch-profile http
 ```
 
-In Development, the API applies pending EF Core migrations and seeds demo users on startup.
+In another terminal:
 
-Local development settings live in `appsettings.Development.json`.
-Base `appsettings.json` does not contain usable database/JWT secrets.
+```bash
+cd frontend
+cp .env.example .env   # if needed
+npm install
+npm run dev
+```
+
+- API: `http://localhost:5067`
+- UI: `http://localhost:5173` (use `localhost`, not `127.0.0.1`, for CORS)
+- Swagger (Development only): `http://localhost:5067/swagger`
+
+### Option B — Full Docker stack
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+- UI: `http://localhost:8080`
+- API: `http://localhost:5067`
+- Postgres: `localhost:5433`
+
+The API container migrates and seeds on startup when `Database__MigrateOnStartup` / `Database__SeedOnStartup` are true (default in compose).
+
+### Development Users
+
+| Email | Password | Role |
+| ----- | -------- | ---- |
+| `admin@payscope.local` | `Admin123!` | Admin |
+| `analyst@payscope.local` | `Analyst123!` | Analyst |
+| `viewer@payscope.local` | `Viewer123!` | Viewer |
+
+These accounts are for local / demo use only.
+
+### Demo scenario
+
+1. Sign in as **Admin**.
+2. Open **Dashboard** — confirm KPIs and charts for the last 24h.
+3. Open **Transactions** — create a payment with amount **25000** and type **Online** (high risk).
+4. Confirm a **Risk Alert** appears; open it and move **Open → UnderReview → Suspicious/Safe**.
+5. Open a second browser tab on **Dashboard** / **Transactions** and create another payment — lists update live (SignalR **Live** badge).
+6. Export filtered transactions as **CSV** or **Excel**.
+7. Open **Audit Logs** — login, payment, review, and export entries should be listed.
+8. Optional: adjust a **Risk Rule**, then create another payment and confirm scoring changed.
+
+### Tests
+
+```bash
+dotnet test PaymentRiskMonitoring.slnx
+# or
+dotnet test backend/PaymentRiskMonitoring.Api.Tests/PaymentRiskMonitoring.Api.Tests.csproj
+```
+
+Coverage includes risk scoring bands, payment decline paths, export formatting, validators, refund not-found, JWT login, and role authorization (Admin vs Viewer on audit logs).
+
+### Security notes
+
+- Base `appsettings.json` has empty DB/JWT secrets; configure via Development settings or environment variables.
+- Swagger UI is Development-only.
+- CORS is explicit-origin (`Cors:Origins` or Development default `http://localhost:5173`).
+- JWT required for APIs; SignalR uses `access_token` query for WebSockets.
+- Response security headers: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, CSP default-src none.
+- Change `Jwt__Secret` and Postgres password before any shared/demo deploy.
+- Users admin UI is out of scope for v1 (placeholder only).
+
+In Development, the API applies pending EF Core migrations and seeds demo data on startup (override with `Database:MigrateOnStartup` / `Database:SeedOnStartup`).
+
 You can override values with environment variables such as:
 
 - `ConnectionStrings__DefaultConnection`
@@ -72,10 +120,9 @@ You can override values with environment variables such as:
 - `Jwt__Issuer`
 - `Jwt__Audience`
 - `Jwt__ExpiryMinutes`
-
-API runs at `http://localhost:5067`.
-
-Swagger UI: `http://localhost:5067/swagger`
+- `Cors__Origins__0`
+- `Database__MigrateOnStartup`
+- `Database__SeedOnStartup`
 
 Health check: `GET http://localhost:5067/api/health`
 
@@ -89,26 +136,7 @@ Manual migration command (optional):
 dotnet ef database update --project backend/PaymentRiskMonitoring.Api/PaymentRiskMonitoring.Api.csproj
 ```
 
-### Development Users
-
-| Email | Password | Role |
-| ----- | -------- | ---- |
-| `admin@payscope.local` | `Admin123!` | Admin |
-| `analyst@payscope.local` | `Analyst123!` | Analyst |
-| `viewer@payscope.local` | `Viewer123!` | Viewer |
-
-These accounts are for local development only.
-
-### Frontend
-
-```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev
-```
-
-Frontend runs at `http://localhost:5173`.
+### Frontend (local details)
 
 After login you are redirected to `/dashboard`.
 
@@ -118,7 +146,7 @@ Sidebar menu items depend on role:
 
 | Role | Visible sections |
 | ---- | ---------------- |
-| Admin | Dashboard, Transactions, Risk Alerts, Merchants, Cards, Risk Rules, Users, Audit Logs |
+| Admin | Dashboard, Transactions, Risk Alerts, Merchants, Cards, Risk Rules, Users (placeholder), Audit Logs |
 | Analyst | Dashboard, Transactions, Risk Alerts |
 | Viewer | Dashboard, Transactions, Merchants |
 
@@ -139,8 +167,6 @@ Merchant API (PR-009):
 - `PUT /api/merchants/{id}` — update (Admin)
 - `POST /api/merchants/{id}/activate` — activate (Admin)
 - `POST /api/merchants/{id}/deactivate` — deactivate (Admin)
-
-Merchant UI arrives in PR-010.
 
 ### Merchants UI (PR-010)
 
@@ -164,7 +190,7 @@ No real PAN/CVV is accepted or stored.
 - Route: `/cards` (list) and `/cards/:id` (detail)
 - Role: Admin only
 - Features: search, status/type filters, pagination, create demo card, change limits, activate/block/deactivate/expire
-- Detail page includes a placeholder section for future card transactions
+- Detail page includes recent transactions and analytics KPIs (PR-027)
 
 Transaction API (PR-013 / PR-016):
 
@@ -334,6 +360,14 @@ Payment Simulator UI arrives in PR-014.
 - `GET /api/transactions/export?format=csv|excel` — StaffRead; respects list filters (max 5,000 rows)
 - Transactions page CSV / Excel export buttons
 
+### Finalization (PR-030)
+
+- xUnit test project: risk engine, validators, export formatter, refund lookup, auth/authorization integration
+- Security headers middleware; configurable CORS origins; migrate/seed flags for containers
+- Full `docker compose` stack: Postgres + API + frontend (nginx)
+- README: local + Docker setup, demo scenario, security notes, test commands
+- Removed unused Samples API endpoints; Users UI marked out of scope for v1
+
 ### PostgreSQL
 
 ```bash
@@ -401,7 +435,7 @@ This project is built incrementally across 30 PRs.
 | PR-027  | Done   | Merchant / card analytics        |
 | PR-028  | Done   | SignalR real-time monitoring     |
 | PR-029  | Done   | Audit logs + transaction export  |
-| PR-030+ | —      | See project plan for details   |
+| PR-030  | Done   | Tests, security, Docker, finalization |
 
 ## License
 

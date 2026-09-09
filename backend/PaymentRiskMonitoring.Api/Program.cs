@@ -67,14 +67,19 @@ builder.Services
         options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-if (builder.Environment.IsDevelopment())
+var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>();
+if (corsOrigins is { Length: > 0 } || builder.Environment.IsDevelopment())
 {
+    var origins = corsOrigins is { Length: > 0 }
+        ? corsOrigins
+        : ["http://localhost:5173"];
+
     builder.Services.AddCors(options =>
     {
-        options.AddPolicy("FrontendDev", policy =>
+        options.AddPolicy("Frontend", policy =>
         {
             policy
-                .WithOrigins("http://localhost:5173")
+                .WithOrigins(origins)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
@@ -92,6 +97,7 @@ builder.Services
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -101,20 +107,38 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Payment Risk Monitoring System API v1");
         options.RoutePrefix = "swagger";
     });
+}
 
+var migrateOnStartup = builder.Configuration.GetValue(
+    "Database:MigrateOnStartup",
+    builder.Environment.IsDevelopment());
+var seedOnStartup = builder.Configuration.GetValue(
+    "Database:SeedOnStartup",
+    builder.Environment.IsDevelopment());
+
+if (migrateOnStartup || seedOnStartup)
+{
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>();
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
         .CreateLogger("DatabaseSeeder");
-    await DatabaseSeeder.InitializeAsync(dbContext, passwordHasher, logger);
+    await DatabaseSeeder.InitializeAsync(
+        dbContext,
+        passwordHasher,
+        logger,
+        applyMigrations: migrateOnStartup,
+        seedData: seedOnStartup);
 }
 
-app.UseHttpsRedirection();
-
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    app.UseCors("FrontendDev");
+    app.UseHttpsRedirection();
+}
+
+if (corsOrigins is { Length: > 0 } || app.Environment.IsDevelopment())
+{
+    app.UseCors("Frontend");
 }
 
 app.UseAuthentication();
@@ -155,3 +179,5 @@ static Task WriteHealthCheckResponse(HttpContext context, Microsoft.Extensions.D
 
     return context.Response.WriteAsync(JsonSerializer.Serialize(response));
 }
+
+public partial class Program;

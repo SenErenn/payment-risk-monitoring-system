@@ -11,10 +11,28 @@ public static class DatabaseSeeder
     public static async Task InitializeAsync(
         AppDbContext dbContext,
         IPasswordHasher<User> passwordHasher,
-        ILogger logger)
+        ILogger logger,
+        bool applyMigrations = true,
+        bool seedData = true)
     {
-        await dbContext.Database.MigrateAsync();
-        logger.LogInformation("Database migrations applied successfully.");
+        if (applyMigrations)
+        {
+            if (dbContext.Database.IsRelational())
+            {
+                await dbContext.Database.MigrateAsync();
+                logger.LogInformation("Database migrations applied successfully.");
+            }
+            else
+            {
+                await dbContext.Database.EnsureCreatedAsync();
+                logger.LogInformation("In-memory database created successfully.");
+            }
+        }
+
+        if (!seedData)
+        {
+            return;
+        }
 
         await SeedUsersAsync(dbContext, passwordHasher, logger);
         await SeedMerchantsAsync(dbContext, logger);
