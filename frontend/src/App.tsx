@@ -69,7 +69,7 @@ function App() {
                       <PlaceholderPage
                         titleKey="placeholder.usersTitle"
                         descriptionKey="placeholder.usersDesc"
-                        comingInKey="placeholder.laterPr"
+                        comingInKey="placeholder.outOfScope"
                       />
                     }
                   />

@@ -122,6 +122,7 @@ export const tr: Messages = {
     auditLogsTitle: 'Denetim Kayıtları',
     auditLogsDesc: 'Konsoldaki kritik işlemleri takip edin.',
     laterPr: 'sonraki bir PR',
+    outOfScope: 'gelecek bir sürüm (v1 kapsamı dışında)',
   },
   auditLogs: {
     title: 'Denetim Kayıtları',
