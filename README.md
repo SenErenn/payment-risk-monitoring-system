@@ -180,6 +180,7 @@ Transaction API (PR-013 / PR-016):
 - Score bands: 0–39 Low, 40–69 Medium, 70–100 High
 - Foundation declines: inactive merchant / card / insufficient limit
 - Advanced additive rules: High Amount, High Limit Usage, Velocity, Multiple Declines, Night High Amount, Sudden Amount Increase
+- Rule thresholds/points/enabled are Admin-managed via Risk Rules (PR-025)
 
 Payment Simulator UI arrives in PR-014.
 
@@ -266,6 +267,7 @@ Payment Simulator UI arrives in PR-014.
 - `NIGHT_HIGH_AMOUNT` — amount ≥ 5,000 during UTC 22:00–05:59 (+20)
 - `SUDDEN_AMOUNT_INCREASE` — amount ≥ 3× average of last 3–5 approved amounts on the card (+20)
 - Score is the sum of matched rule points (capped at 100); no signals → `BASELINE` (15, Low)
+- Defaults above are seeded into `RiskRules`; Admin can change threshold/points/enabled (PR-025)
 
 ### Risk Alerts Backend (PR-022)
 
@@ -293,6 +295,14 @@ Payment Simulator UI arrives in PR-014.
 - Detail UI: start review, decision actions, notes, who/when reviewed
 - List shows reviewer name and review time when available
 
+### Risk Rules Admin (PR-025)
+
+- Additive PR-021 rules stored in `RiskRules` (threshold, points, enabled)
+- `GET /api/risk-rules`, `GET /api/risk-rules/{id}`, `PUT /api/risk-rules/{id}` — Admin only
+- Admin `/risk-rules` UI to edit threshold / points / enabled
+- `RiskAnalysisService` loads rules per payment; changes apply to new transactions immediately
+- Foundation declines and score bands remain hardcoded
+
 ### PostgreSQL
 
 ```bash
@@ -316,6 +326,8 @@ After running the backend once in Development, these tables should exist:
 - `Merchants`
 - `Cards`
 - `Transactions`
+- `RiskAlerts`
+- `RiskRules`
 - `__EFMigrationsHistory`
 
 If you want to customize these values, create a local `.env` file by copying `.env.example`.
@@ -352,7 +364,8 @@ This project is built incrementally across 30 PRs.
 | PR-022  | Done   | Risk alerts backend              |
 | PR-023  | Done   | Risk alerts frontend             |
 | PR-024  | Done   | Analyst review workflow          |
-| PR-025+ | —      | See project plan for details   |
+| PR-025  | Done   | Risk rules admin management      |
+| PR-026+ | —      | See project plan for details   |
 
 ## License
 

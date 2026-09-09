@@ -483,6 +483,23 @@
   width: auto;
 }
 
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.inline-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 8rem;
+}
+
+.inline-field input {
+  max-width: 8rem;
+}
+
 .table-wrap {
   overflow-x: auto;
   background: var(--surface);

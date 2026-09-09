@@ -22,6 +22,8 @@ public class AppDbContext : DbContext
 
     public DbSet<RiskAlert> RiskAlerts => Set<RiskAlert>();
 
+    public DbSet<RiskRule> RiskRules => Set<RiskRule>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
