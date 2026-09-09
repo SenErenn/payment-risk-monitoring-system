@@ -53,6 +53,13 @@ export const tr: Messages = {
     operationsConsole: 'Operasyon Konsolu',
     mainNav: 'Ana menü',
   },
+  realtime: {
+    connected: 'Canlı',
+    connecting: 'Bağlanıyor…',
+    reconnecting: 'Yeniden bağlanıyor…',
+    disconnected: 'Çevrimdışı',
+    hint: 'Gerçek zamanlı izleme bağlantı durumu',
+  },
   login: {
     title: 'Giriş yap',
     subtitle: 'Devam etmek için dahili hesabınızı kullanın.',

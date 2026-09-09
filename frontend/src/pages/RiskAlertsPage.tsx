@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { listRiskAlerts } from '../api/riskAlerts'
@@ -11,6 +11,7 @@ import type {
   SortDirection,
 } from '../api/riskAlertTypes'
 import { useLocale, useT } from '../i18n'
+import { MonitoringEvents, useRealtimeEvent } from '../realtime'
 import {
   alertStatusClass,
   formatAmount,
@@ -58,6 +59,13 @@ export function RiskAlertsPage() {
   const [result, setResult] = useState<PagedResult<RiskAlert> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [liveTick, setLiveTick] = useState(0)
+  const silentReloadRef = useRef(false)
+
+  useRealtimeEvent(MonitoringEvents.RiskAlertCreated, () => {
+    silentReloadRef.current = true
+    setLiveTick((value) => value + 1)
+  })
 
   useEffect(() => {
     setSearchInput(searchFromUrl)
@@ -67,7 +75,12 @@ export function RiskAlertsPage() {
     let cancelled = false
 
     async function load() {
-      setIsLoading(true)
+      const silent = silentReloadRef.current
+      silentReloadRef.current = false
+
+      if (!silent) {
+        setIsLoading(true)
+      }
       setError(null)
 
       try {
@@ -116,6 +129,7 @@ export function RiskAlertsPage() {
     sortDirectionFromUrl,
     merchantIdFromUrl,
     cardIdFromUrl,
+    liveTick,
     t,
   ])
 

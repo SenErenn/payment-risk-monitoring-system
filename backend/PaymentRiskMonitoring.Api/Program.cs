@@ -8,7 +8,9 @@ using Microsoft.OpenApi;
 using PaymentRiskMonitoring.Api.Data;
 using PaymentRiskMonitoring.Api.Entities;
 using PaymentRiskMonitoring.Api.Extensions;
+using PaymentRiskMonitoring.Api.Hubs;
 using PaymentRiskMonitoring.Api.Middleware;
+using PaymentRiskMonitoring.Api.Realtime;
 using PaymentRiskMonitoring.Api.Services;
 using System.Text.Json;
 
@@ -55,6 +57,14 @@ builder.Services.AddScoped<RiskAlertService>();
 builder.Services.AddScoped<RiskRuleService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<EntityAnalyticsService>();
+builder.Services.AddSingleton<IRealtimeEventPublisher, RealtimeEventPublisher>();
+builder.Services
+    .AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
 if (builder.Environment.IsDevelopment())
 {
@@ -65,7 +75,8 @@ if (builder.Environment.IsDevelopment())
             policy
                 .WithOrigins("http://localhost:5173")
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials();
         });
     });
 }
@@ -109,6 +120,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<MonitoringHub>(MonitoringRealtime.HubPath);
 app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false,

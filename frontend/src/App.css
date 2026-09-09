@@ -280,6 +280,64 @@
   font-size: 0.925rem;
 }
 
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(148, 163, 184, 0.18);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.live-badge-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.live-badge-connected {
+  background: rgba(34, 197, 94, 0.18);
+  color: #bbf7d0;
+}
+
+.live-badge-connected .live-badge-dot {
+  background: #4ade80;
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+  animation: live-pulse 1.8s ease-out infinite;
+}
+
+.live-badge-connecting,
+.live-badge-reconnecting {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+}
+
+.live-badge-connecting .live-badge-dot,
+.live-badge-reconnecting .live-badge-dot {
+  background: #fbbf24;
+}
+
+.live-badge-disconnected .live-badge-dot {
+  background: #94a3b8;
+}
+
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 0.45rem rgba(74, 222, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
 .text-link {
   color: var(--accent);
   text-decoration: none;

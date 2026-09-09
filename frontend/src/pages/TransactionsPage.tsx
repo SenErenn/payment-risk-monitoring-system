@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { listCards } from '../api/cards'
@@ -17,6 +17,7 @@ import type {
 } from '../api/transactionTypes'
 import { useAuth } from '../auth/AuthContext'
 import { useLocale, useT } from '../i18n'
+import { MonitoringEvents, useRealtimeEvent } from '../realtime'
 import {
   decisionPanelClass,
   formatAmount,
@@ -132,6 +133,13 @@ export function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
+  const [liveTick, setLiveTick] = useState(0)
+  const silentReloadRef = useRef(false)
+
+  useRealtimeEvent(MonitoringEvents.TransactionCreated, () => {
+    silentReloadRef.current = true
+    setLiveTick((value) => value + 1)
+  })
 
   const [merchants, setMerchants] = useState<Merchant[]>([])
   const [cards, setCards] = useState<Card[]>([])
@@ -232,7 +240,12 @@ export function TransactionsPage() {
     let cancelled = false
 
     async function load() {
-      setIsLoading(true)
+      const silent = silentReloadRef.current
+      silentReloadRef.current = false
+
+      if (!silent) {
+        setIsLoading(true)
+      }
       setError(null)
 
       try {
@@ -290,6 +303,7 @@ export function TransactionsPage() {
     sortByFromUrl,
     sortDirectionFromUrl,
     reloadToken,
+    liveTick,
     t,
   ])
 

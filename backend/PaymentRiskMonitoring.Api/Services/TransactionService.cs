@@ -15,11 +15,16 @@ public class TransactionService
 
     private readonly AppDbContext _dbContext;
     private readonly RiskAnalysisService _riskAnalysisService;
+    private readonly IRealtimeEventPublisher _realtimeEventPublisher;
 
-    public TransactionService(AppDbContext dbContext, RiskAnalysisService riskAnalysisService)
+    public TransactionService(
+        AppDbContext dbContext,
+        RiskAnalysisService riskAnalysisService,
+        IRealtimeEventPublisher realtimeEventPublisher)
     {
         _dbContext = dbContext;
         _riskAnalysisService = riskAnalysisService;
+        _realtimeEventPublisher = realtimeEventPublisher;
     }
 
     public async Task<PagedResult<TransactionDto>> GetTransactionsAsync(
@@ -242,10 +247,11 @@ public class TransactionService
 
             _dbContext.Transactions.Add(transaction);
 
+            RiskAlert? riskAlert = null;
             if (transaction.RiskLevel == RiskLevel.High)
             {
-                _dbContext.RiskAlerts.Add(
-                    RiskAlertService.CreateOpenAlertForTransaction(transaction, now));
+                riskAlert = RiskAlertService.CreateOpenAlertForTransaction(transaction, now);
+                _dbContext.RiskAlerts.Add(riskAlert);
             }
 
             try
@@ -274,9 +280,19 @@ public class TransactionService
 
             await dbTransaction.CommitAsync(cancellationToken);
 
+            var createdDto = MapTransaction(transaction);
+            await _realtimeEventPublisher.PublishTransactionCreatedAsync(createdDto, cancellationToken);
+
+            if (riskAlert is not null)
+            {
+                await _realtimeEventPublisher.PublishRiskAlertCreatedAsync(
+                    RiskAlertService.ToDto(riskAlert),
+                    cancellationToken);
+            }
+
             return new CreateTransactionResult
             {
-                Transaction = MapTransaction(transaction),
+                Transaction = createdDto,
                 WasCreated = true
             };
         }

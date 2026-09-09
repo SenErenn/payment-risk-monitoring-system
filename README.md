@@ -318,6 +318,14 @@ Payment Simulator UI arrives in PR-014.
 - Merchant and card detail pages show date-ranged KPI cards plus deep links to transactions/alerts
 - Default analytics window: last 24 hours UTC
 
+### SignalR Real-Time Monitoring (PR-028)
+
+- Hub: `/hubs/monitoring` (JWT via `access_token` query; StaffRead to connect)
+- Events: `TransactionCreated` (all staff), `RiskAlertCreated` (Admin/Analyst)
+- Published after a newly created payment (idempotent replays do not broadcast)
+- Frontend auto-reconnects; topbar shows Live / Reconnecting / Offline
+- Dashboard, Transactions, and Risk Alerts refresh silently when events arrive
+
 ### PostgreSQL
 
 ```bash
@@ -382,7 +390,8 @@ This project is built incrementally across 30 PRs.
 | PR-025  | Done   | Risk rules admin management      |
 | PR-026  | Done   | Dashboard + reporting            |
 | PR-027  | Done   | Merchant / card analytics        |
-| PR-028+ | —      | See project plan for details   |
+| PR-028  | Done   | SignalR real-time monitoring     |
+| PR-029+ | —      | See project plan for details   |
 
 ## License
 
