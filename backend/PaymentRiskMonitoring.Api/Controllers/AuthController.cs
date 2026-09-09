@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PaymentRiskMonitoring.Api.Audit;
 using PaymentRiskMonitoring.Api.Authorization;
 using PaymentRiskMonitoring.Api.DTOs.Auth;
 using PaymentRiskMonitoring.Api.Exceptions;
@@ -14,10 +15,12 @@ namespace PaymentRiskMonitoring.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
+    private readonly AuditLogService _auditLogService;
 
-    public AuthController(AuthService authService)
+    public AuthController(AuthService authService, AuditLogService auditLogService)
     {
         _authService = authService;
+        _auditLogService = auditLogService;
     }
 
     [AllowAnonymous]
@@ -27,6 +30,22 @@ public class AuthController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _authService.LoginAsync(request, cancellationToken);
+
+        await _auditLogService.WriteAsync(
+            new AuditEntry
+            {
+                UserId = result.User.Id,
+                UserEmail = result.User.Email,
+                UserName = $"{result.User.FirstName} {result.User.LastName}".Trim(),
+                Action = AuditActions.UserLogin,
+                EntityType = AuditEntityTypes.User,
+                EntityId = result.User.Id.ToString(),
+                Summary = $"User {result.User.Email} signed in.",
+                Details = AuditHttpExtensions.ToAuditJson(new { result.User.Role }),
+                IpAddress = HttpContext.GetClientIpAddress()
+            },
+            cancellationToken);
+
         return Ok(ApiResponse<LoginResponse>.Ok(result, "Login successful."));
     }
 
@@ -76,6 +95,8 @@ public class AuthController : ControllerBase
             canCreateRefunds = role is AppRoles.Admin or AppRoles.Analyst,
             canViewTransactions = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
             canViewMerchants = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
+            canViewAuditLogs = role == AppRoles.Admin,
+            canExportTransactions = role is AppRoles.Admin or AppRoles.Analyst or AppRoles.Viewer,
             checkedAtUtc = DateTime.UtcNow
         };
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PaymentRiskMonitoring.Api.Audit;
 using PaymentRiskMonitoring.Api.Authorization;
 using PaymentRiskMonitoring.Api.DTOs.Analytics;
 using PaymentRiskMonitoring.Api.DTOs.Cards;
@@ -15,13 +16,16 @@ public class CardsController : ControllerBase
 {
     private readonly CardService _cardService;
     private readonly EntityAnalyticsService _entityAnalyticsService;
+    private readonly AuditLogService _auditLogService;
 
     public CardsController(
         CardService cardService,
-        EntityAnalyticsService entityAnalyticsService)
+        EntityAnalyticsService entityAnalyticsService,
+        AuditLogService auditLogService)
     {
         _cardService = cardService;
         _entityAnalyticsService = entityAnalyticsService;
+        _auditLogService = auditLogService;
     }
 
     [Authorize(Policy = AuthorizationPolicies.AnalystOrAdmin)]
@@ -65,6 +69,13 @@ public class CardsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var card = await _cardService.CreateCardAsync(request, cancellationToken);
+        await WriteCardAuditAsync(
+            AuditActions.CardCreated,
+            card.Id,
+            $"Card {card.MaskedCardNumber} created.",
+            new { card.CardToken, card.MaskedCardNumber, card.Status },
+            cancellationToken);
+
         return CreatedAtAction(
             nameof(GetCardById),
             new { id = card.Id },
@@ -79,6 +90,13 @@ public class CardsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var card = await _cardService.UpdateCardAsync(id, request, cancellationToken);
+        await WriteCardAuditAsync(
+            AuditActions.CardUpdated,
+            card.Id,
+            $"Card {card.MaskedCardNumber} limits updated.",
+            new { card.CreditLimit, card.AvailableLimit },
+            cancellationToken);
+
         return Ok(ApiResponse<CardDto>.Ok(card, "Card limits updated."));
     }
 
@@ -90,6 +108,13 @@ public class CardsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var card = await _cardService.UpdateCardStatusAsync(id, request.Status, cancellationToken);
+        await WriteCardAuditAsync(
+            AuditActions.CardStatusChanged,
+            card.Id,
+            $"Card {card.MaskedCardNumber} status set to {card.Status}.",
+            new { card.Status },
+            cancellationToken);
+
         return Ok(ApiResponse<CardDto>.Ok(card, "Card status updated."));
     }
 
@@ -100,6 +125,13 @@ public class CardsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var card = await _cardService.UpdateCardStatusAsync(id, CardStatus.Active, cancellationToken);
+        await WriteCardAuditAsync(
+            AuditActions.CardStatusChanged,
+            card.Id,
+            $"Card {card.MaskedCardNumber} activated.",
+            new { card.Status },
+            cancellationToken);
+
         return Ok(ApiResponse<CardDto>.Ok(card, "Card activated."));
     }
 
@@ -110,6 +142,13 @@ public class CardsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var card = await _cardService.UpdateCardStatusAsync(id, CardStatus.Blocked, cancellationToken);
+        await WriteCardAuditAsync(
+            AuditActions.CardStatusChanged,
+            card.Id,
+            $"Card {card.MaskedCardNumber} blocked.",
+            new { card.Status },
+            cancellationToken);
+
         return Ok(ApiResponse<CardDto>.Ok(card, "Card blocked."));
     }
 
@@ -120,6 +159,36 @@ public class CardsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var card = await _cardService.UpdateCardStatusAsync(id, CardStatus.Passive, cancellationToken);
+        await WriteCardAuditAsync(
+            AuditActions.CardStatusChanged,
+            card.Id,
+            $"Card {card.MaskedCardNumber} deactivated.",
+            new { card.Status },
+            cancellationToken);
+
         return Ok(ApiResponse<CardDto>.Ok(card, "Card deactivated."));
+    }
+
+    private Task WriteCardAuditAsync(
+        string action,
+        Guid cardId,
+        string summary,
+        object details,
+        CancellationToken cancellationToken)
+    {
+        return _auditLogService.WriteAsync(
+            new AuditEntry
+            {
+                UserId = User.GetOptionalUserId(),
+                UserEmail = User.GetOptionalEmail(),
+                UserName = User.GetOptionalDisplayName(),
+                Action = action,
+                EntityType = AuditEntityTypes.Card,
+                EntityId = cardId.ToString(),
+                Summary = summary,
+                Details = AuditHttpExtensions.ToAuditJson(details),
+                IpAddress = HttpContext.GetClientIpAddress()
+            },
+            cancellationToken);
     }
 }

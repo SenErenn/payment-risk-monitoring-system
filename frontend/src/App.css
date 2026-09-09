@@ -416,6 +416,25 @@
   margin-bottom: 1.25rem;
 }
 
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.audit-details {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: #0f172a0d;
+  color: #334155;
+  font-size: 0.82rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .breadcrumb {
   margin: 0 0 0.35rem !important;
   font-size: 0.9rem;

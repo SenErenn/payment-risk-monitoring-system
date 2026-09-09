@@ -1,4 +1,4 @@
-import { apiRequest } from './client'
+import { downloadAuthenticatedFile, apiRequest } from './client'
 import type {
   CreateRefundPayload,
   CreateTransactionPayload,
@@ -98,5 +98,55 @@ export async function createRefund(
       method: 'POST',
       body: payload,
     },
+  )
+}
+
+export type TransactionExportFormat = 'csv' | 'excel'
+
+export async function exportTransactions(
+  params: Omit<TransactionListParams, 'page' | 'pageSize'> & {
+    format: TransactionExportFormat
+  },
+): Promise<void> {
+  const query = new URLSearchParams()
+  query.set('format', params.format)
+
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim())
+  }
+  if (params.status) {
+    query.set('status', params.status)
+  }
+  if (params.merchantId) {
+    query.set('merchantId', params.merchantId)
+  }
+  if (params.cardId) {
+    query.set('cardId', params.cardId)
+  }
+  if (params.paymentType) {
+    query.set('paymentType', params.paymentType)
+  }
+  if (params.createdFrom) {
+    query.set('createdFrom', params.createdFrom)
+  }
+  if (params.createdTo) {
+    query.set('createdTo', params.createdTo)
+  }
+  if (params.minAmount !== undefined && params.minAmount !== null) {
+    query.set('minAmount', String(params.minAmount))
+  }
+  if (params.maxAmount !== undefined && params.maxAmount !== null) {
+    query.set('maxAmount', String(params.maxAmount))
+  }
+  if (params.sortBy) {
+    query.set('sortBy', params.sortBy)
+  }
+  if (params.sortDirection) {
+    query.set('sortDirection', params.sortDirection)
+  }
+
+  await downloadAuthenticatedFile(
+    `/api/transactions/export?${query.toString()}`,
+    params.format === 'excel' ? 'transactions.xls' : 'transactions.csv',
   )
 }

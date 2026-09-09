@@ -57,6 +57,7 @@ builder.Services.AddScoped<RiskAlertService>();
 builder.Services.AddScoped<RiskRuleService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<EntityAnalyticsService>();
+builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddSingleton<IRealtimeEventPublisher, RealtimeEventPublisher>();
 builder.Services
     .AddSignalR()

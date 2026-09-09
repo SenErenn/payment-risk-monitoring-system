@@ -326,6 +326,14 @@ Payment Simulator UI arrives in PR-014.
 - Frontend auto-reconnects; topbar shows Live / Reconnecting / Offline
 - Dashboard, Transactions, and Risk Alerts refresh silently when events arrive
 
+### Audit Logs + Export (PR-029)
+
+- `AuditLogs` table + `GET /api/audit-logs` / `GET /api/audit-logs/actions` — Admin only
+- Critical actions logged: login, merchant/card mutations, transaction create, refund, risk rule update, alert review, transaction export
+- Admin `/audit-logs` UI with search, action/entity filters, and detail expand
+- `GET /api/transactions/export?format=csv|excel` — StaffRead; respects list filters (max 5,000 rows)
+- Transactions page CSV / Excel export buttons
+
 ### PostgreSQL
 
 ```bash
@@ -351,6 +359,7 @@ After running the backend once in Development, these tables should exist:
 - `Transactions`
 - `RiskAlerts`
 - `RiskRules`
+- `AuditLogs`
 - `__EFMigrationsHistory`
 
 If you want to customize these values, create a local `.env` file by copying `.env.example`.
@@ -391,7 +400,8 @@ This project is built incrementally across 30 PRs.
 | PR-026  | Done   | Dashboard + reporting            |
 | PR-027  | Done   | Merchant / card analytics        |
 | PR-028  | Done   | SignalR real-time monitoring     |
-| PR-029+ | —      | See project plan for details   |
+| PR-029  | Done   | Audit logs + transaction export  |
+| PR-030+ | —      | See project plan for details   |
 
 ## License
 

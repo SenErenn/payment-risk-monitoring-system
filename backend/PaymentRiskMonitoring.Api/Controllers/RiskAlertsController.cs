@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PaymentRiskMonitoring.Api.Audit;
 using PaymentRiskMonitoring.Api.Authorization;
 using PaymentRiskMonitoring.Api.DTOs.RiskAlerts;
 using PaymentRiskMonitoring.Api.Enums;
@@ -16,10 +17,12 @@ namespace PaymentRiskMonitoring.Api.Controllers;
 public class RiskAlertsController : ControllerBase
 {
     private readonly RiskAlertService _riskAlertService;
+    private readonly AuditLogService _auditLogService;
 
-    public RiskAlertsController(RiskAlertService riskAlertService)
+    public RiskAlertsController(RiskAlertService riskAlertService, AuditLogService auditLogService)
     {
         _riskAlertService = riskAlertService;
+        _auditLogService = auditLogService;
     }
 
     [HttpGet]
@@ -60,6 +63,26 @@ public class RiskAlertsController : ControllerBase
             id,
             request,
             GetCurrentUserId(),
+            cancellationToken);
+
+        await _auditLogService.WriteAsync(
+            new AuditEntry
+            {
+                UserId = User.GetOptionalUserId(),
+                UserEmail = User.GetOptionalEmail(),
+                UserName = User.GetOptionalDisplayName(),
+                Action = AuditActions.RiskAlertReviewed,
+                EntityType = AuditEntityTypes.RiskAlert,
+                EntityId = alert.Id.ToString(),
+                Summary = $"Risk alert {alert.AlertCode} reviewed → {alert.Status}.",
+                Details = AuditHttpExtensions.ToAuditJson(new
+                {
+                    alert.AlertCode,
+                    alert.Status,
+                    alert.AnalystNotes
+                }),
+                IpAddress = HttpContext.GetClientIpAddress()
+            },
             cancellationToken);
 
         return Ok(ApiResponse<RiskAlertDto>.Ok(alert, "Risk alert review saved."));

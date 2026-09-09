@@ -24,6 +24,8 @@ public class AppDbContext : DbContext
 
     public DbSet<RiskRule> RiskRules => Set<RiskRule>();
 
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

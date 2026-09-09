@@ -6,6 +6,7 @@ import { RoleRoute } from './auth/RoleRoute'
 import { LocaleProvider } from './i18n'
 import { AppLayout } from './layouts/AppLayout'
 import { RealtimeProvider } from './realtime'
+import { AuditLogsPage } from './pages/AuditLogsPage'
 import { AccessDeniedPage } from './pages/AccessDeniedPage'
 import { CardDetailPage } from './pages/CardDetailPage'
 import { CardsPage } from './pages/CardsPage'
@@ -74,13 +75,7 @@ function App() {
                   />
                   <Route
                     path="/audit-logs"
-                    element={
-                      <PlaceholderPage
-                        titleKey="placeholder.auditLogsTitle"
-                        descriptionKey="placeholder.auditLogsDesc"
-                        comingInKey="placeholder.laterPr"
-                      />
-                    }
+                    element={<AuditLogsPage />}
                   />
                 </Route>
               </Route>
