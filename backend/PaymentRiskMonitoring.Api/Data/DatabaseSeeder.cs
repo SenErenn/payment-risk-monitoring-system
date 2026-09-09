@@ -21,6 +21,7 @@ public static class DatabaseSeeder
         await SeedCardsAsync(dbContext, logger);
         await SeedTransactionsAsync(dbContext, logger);
         await SeedRiskRulesAsync(dbContext, logger);
+        await SeedDashboardDemoAsync(dbContext, logger);
     }
 
     private static async Task SeedUsersAsync(
@@ -349,6 +350,138 @@ public static class DatabaseSeeder
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation("Seeded {RuleCount} risk rules.", missing.Count);
+    }
+
+    private static async Task SeedDashboardDemoAsync(AppDbContext dbContext, ILogger logger)
+    {
+        if (await dbContext.Transactions.AnyAsync(transaction =>
+                transaction.TransactionCode.StartsWith("TXN_DASH_")))
+        {
+            logger.LogInformation("Dashboard demo seed skipped because demo transactions already exist.");
+            return;
+        }
+
+        var merchantIds = new[]
+        {
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+            Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
+        };
+
+        var cardIds = new[]
+        {
+            Guid.Parse("e1111111-1111-1111-1111-111111111111"),
+            Guid.Parse("e2222222-2222-2222-2222-222222222222")
+        };
+
+        var now = DateTime.UtcNow;
+        var transactions = new List<Transaction>();
+        var alerts = new List<RiskAlert>();
+
+        for (var i = 0; i < 48; i++)
+        {
+            var createdAt = now.AddHours(-(i % 24)).AddMinutes(-(i * 7 % 50));
+            var merchantId = merchantIds[i % merchantIds.Length];
+            var cardId = cardIds[i % cardIds.Length];
+            var amount = 75m + (i * 37.5m) % 2400m;
+
+            var status = (i % 7) switch
+            {
+                0 => TransactionStatus.Declined,
+                1 => TransactionStatus.PartiallyRefunded,
+                2 => TransactionStatus.Refunded,
+                _ => TransactionStatus.Approved
+            };
+
+            var riskLevel = (i % 5) switch
+            {
+                0 => RiskLevel.High,
+                1 or 2 => RiskLevel.Medium,
+                _ => RiskLevel.Low
+            };
+
+            if (status == TransactionStatus.Declined && riskLevel == RiskLevel.Low)
+            {
+                riskLevel = RiskLevel.Medium;
+            }
+
+            var riskScore = riskLevel switch
+            {
+                RiskLevel.High => 78 + (i % 15),
+                RiskLevel.Medium => 45 + (i % 20),
+                _ => 12 + (i % 20)
+            };
+
+            var transactionId = Guid.Parse($"b{i:D7}-dddd-dddd-dddd-dddddddddddd");
+            var transaction = new Transaction
+            {
+                Id = transactionId,
+                TransactionCode = $"TXN_DASH_{i:D3}",
+                MerchantId = merchantId,
+                CardId = cardId,
+                Amount = Math.Round(amount, 2),
+                Currency = "TRY",
+                Status = status,
+                PaymentType = i % 2 == 0 ? PaymentType.Online : PaymentType.Contactless,
+                RiskScore = Math.Clamp(riskScore, 0, 100),
+                RiskLevel = riskLevel,
+                RiskReasons = riskLevel == RiskLevel.Low
+                    ?
+                    [
+                        new Models.Risk.RiskReason
+                        {
+                            Code = "BASELINE",
+                            Message = "No elevated risk signals.",
+                            Points = 0
+                        }
+                    ]
+                    :
+                    [
+                        new Models.Risk.RiskReason
+                        {
+                            Code = "HIGH_AMOUNT",
+                            Message = "Demo high amount signal.",
+                            Points = riskScore
+                        }
+                    ],
+                DecisionReason = status == TransactionStatus.Declined
+                    ? "Declined: demo risk sample."
+                    : $"Approved with risk score {riskScore} ({riskLevel}).",
+                DeclineReason = status == TransactionStatus.Declined
+                    ? "Declined: demo risk sample."
+                    : null,
+                IdempotencyKey = $"dash-demo-{i:D3}",
+                CreatedAt = createdAt
+            };
+
+            transactions.Add(transaction);
+
+            if (riskLevel == RiskLevel.High)
+            {
+                alerts.Add(new RiskAlert
+                {
+                    Id = Guid.Parse($"c{i:D7}-eeee-eeee-eeee-eeeeeeeeeeee"),
+                    AlertCode = $"ALT_DASH_{i:D3}",
+                    TransactionId = transactionId,
+                    RiskLevel = riskLevel,
+                    RiskScore = transaction.RiskScore,
+                    Status = i % 3 == 0 ? AlertStatus.UnderReview : AlertStatus.Open,
+                    CreatedAt = createdAt,
+                    UpdatedAt = createdAt
+                });
+            }
+        }
+
+        dbContext.Transactions.AddRange(transactions);
+        await dbContext.SaveChangesAsync();
+
+        dbContext.RiskAlerts.AddRange(alerts);
+        await dbContext.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Seeded {TransactionCount} dashboard demo transactions and {AlertCount} risk alerts.",
+            transactions.Count,
+            alerts.Count);
     }
 
     private static RiskRule CreateRiskRule(
