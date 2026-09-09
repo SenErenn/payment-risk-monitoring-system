@@ -31,6 +31,61 @@ public class TransactionService
         TransactionListQuery query,
         CancellationToken cancellationToken = default)
     {
+        var transactionsQuery = BuildFilteredQuery(query);
+
+        var totalCount = await transactionsQuery.CountAsync(cancellationToken);
+
+        transactionsQuery = ApplySorting(transactionsQuery, query.SortBy, query.SortDirection);
+
+        var transactions = await transactionsQuery
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<TransactionDto>
+        {
+            Items = transactions.Select(transaction => MapTransaction(transaction)).ToList(),
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalCount = totalCount
+        };
+    }
+
+    public async Task<IReadOnlyList<TransactionDto>> GetTransactionsForExportAsync(
+        TransactionExportQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        var listQuery = new TransactionListQuery
+        {
+            Search = query.Search,
+            Status = query.Status,
+            MerchantId = query.MerchantId,
+            CardId = query.CardId,
+            PaymentType = query.PaymentType,
+            CreatedFrom = query.CreatedFrom,
+            CreatedTo = query.CreatedTo,
+            MinAmount = query.MinAmount,
+            MaxAmount = query.MaxAmount,
+            SortBy = query.SortBy,
+            SortDirection = query.SortDirection,
+            Page = 1,
+            PageSize = TransactionExportFormatter.MaxExportRows
+        };
+
+        var transactionsQuery = ApplySorting(
+            BuildFilteredQuery(listQuery),
+            query.SortBy,
+            query.SortDirection);
+
+        var transactions = await transactionsQuery
+            .Take(TransactionExportFormatter.MaxExportRows)
+            .ToListAsync(cancellationToken);
+
+        return transactions.Select(transaction => MapTransaction(transaction)).ToList();
+    }
+
+    private IQueryable<Transaction> BuildFilteredQuery(TransactionListQuery query)
+    {
         var transactionsQuery = _dbContext.Transactions
             .AsNoTracking()
             .Include(transaction => transaction.Merchant)
@@ -94,22 +149,7 @@ public class TransactionService
                 transaction.Amount <= query.MaxAmount.Value);
         }
 
-        var totalCount = await transactionsQuery.CountAsync(cancellationToken);
-
-        transactionsQuery = ApplySorting(transactionsQuery, query.SortBy, query.SortDirection);
-
-        var transactions = await transactionsQuery
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<TransactionDto>
-        {
-            Items = transactions.Select(transaction => MapTransaction(transaction)).ToList(),
-            Page = query.Page,
-            PageSize = query.PageSize,
-            TotalCount = totalCount
-        };
+        return transactionsQuery;
     }
 
     public async Task<TransactionDto> GetTransactionByIdAsync(

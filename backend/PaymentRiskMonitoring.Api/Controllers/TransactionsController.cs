@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PaymentRiskMonitoring.Api.Audit;
 using PaymentRiskMonitoring.Api.Authorization;
 using PaymentRiskMonitoring.Api.DTOs.Refunds;
 using PaymentRiskMonitoring.Api.DTOs.Transactions;
@@ -14,13 +15,16 @@ public class TransactionsController : ControllerBase
 {
     private readonly TransactionService _transactionService;
     private readonly RefundService _refundService;
+    private readonly AuditLogService _auditLogService;
 
     public TransactionsController(
         TransactionService transactionService,
-        RefundService refundService)
+        RefundService refundService,
+        AuditLogService auditLogService)
     {
         _transactionService = transactionService;
         _refundService = refundService;
+        _auditLogService = auditLogService;
     }
 
     [Authorize(Policy = AuthorizationPolicies.StaffRead)]
@@ -31,6 +35,46 @@ public class TransactionsController : ControllerBase
     {
         var result = await _transactionService.GetTransactionsAsync(query, cancellationToken);
         return Ok(ApiResponse<PagedResult<TransactionDto>>.Ok(result, "Transactions retrieved."));
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.StaffRead)]
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportTransactions(
+        [FromQuery] TransactionExportQuery query,
+        CancellationToken cancellationToken)
+    {
+        var transactions = await _transactionService.GetTransactionsForExportAsync(
+            query,
+            cancellationToken);
+
+        var (content, contentType, fileName) = TransactionExportFormatter.Format(
+            transactions,
+            query.Format);
+
+        await _auditLogService.WriteAsync(
+            new AuditEntry
+            {
+                UserId = User.GetOptionalUserId(),
+                UserEmail = User.GetOptionalEmail(),
+                UserName = User.GetOptionalDisplayName(),
+                Action = AuditActions.TransactionsExported,
+                EntityType = AuditEntityTypes.Transaction,
+                Summary = $"Exported {transactions.Count} transaction(s) as {query.Format.Trim().ToLowerInvariant()}.",
+                Details = AuditHttpExtensions.ToAuditJson(new
+                {
+                    format = query.Format,
+                    rowCount = transactions.Count,
+                    query.Search,
+                    query.Status,
+                    query.MerchantId,
+                    query.CardId,
+                    query.PaymentType
+                }),
+                IpAddress = HttpContext.GetClientIpAddress()
+            },
+            cancellationToken);
+
+        return File(content, contentType, fileName);
     }
 
     [Authorize(Policy = AuthorizationPolicies.StaffRead)]
@@ -58,6 +102,33 @@ public class TransactionsController : ControllerBase
         var message = result.WasCreated
             ? result.Transaction.DecisionMessage ?? "Transaction created."
             : "Existing payment returned for duplicate or idempotent request.";
+
+        if (result.WasCreated)
+        {
+            await _auditLogService.WriteAsync(
+                new AuditEntry
+                {
+                    UserId = User.GetOptionalUserId(),
+                    UserEmail = User.GetOptionalEmail(),
+                    UserName = User.GetOptionalDisplayName(),
+                    Action = AuditActions.TransactionCreated,
+                    EntityType = AuditEntityTypes.Transaction,
+                    EntityId = result.Transaction.Id.ToString(),
+                    Summary =
+                        $"Transaction {result.Transaction.TransactionCode} created ({result.Transaction.Status}).",
+                    Details = AuditHttpExtensions.ToAuditJson(new
+                    {
+                        result.Transaction.TransactionCode,
+                        result.Transaction.Amount,
+                        result.Transaction.Currency,
+                        result.Transaction.Status,
+                        result.Transaction.RiskLevel,
+                        result.Transaction.RiskScore
+                    }),
+                    IpAddress = HttpContext.GetClientIpAddress()
+                },
+                cancellationToken);
+        }
 
         var payload = ApiResponse<TransactionDto>.Ok(result.Transaction, message);
 
@@ -90,6 +161,29 @@ public class TransactionsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var refund = await _refundService.CreateRefundAsync(id, request, cancellationToken);
+
+        await _auditLogService.WriteAsync(
+            new AuditEntry
+            {
+                UserId = User.GetOptionalUserId(),
+                UserEmail = User.GetOptionalEmail(),
+                UserName = User.GetOptionalDisplayName(),
+                Action = AuditActions.RefundCreated,
+                EntityType = AuditEntityTypes.Refund,
+                EntityId = refund.Id.ToString(),
+                Summary = $"Refund {refund.RefundCode} created for transaction {refund.TransactionCode}.",
+                Details = AuditHttpExtensions.ToAuditJson(new
+                {
+                    refund.RefundCode,
+                    refund.TransactionId,
+                    refund.Amount,
+                    refund.Currency,
+                    refund.Reason
+                }),
+                IpAddress = HttpContext.GetClientIpAddress()
+            },
+            cancellationToken);
+
         return CreatedAtAction(
             nameof(GetTransactionRefunds),
             new { id },

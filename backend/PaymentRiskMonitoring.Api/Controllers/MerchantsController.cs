@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PaymentRiskMonitoring.Api.Audit;
 using PaymentRiskMonitoring.Api.Authorization;
 using PaymentRiskMonitoring.Api.DTOs.Analytics;
 using PaymentRiskMonitoring.Api.DTOs.Merchants;
@@ -14,13 +15,16 @@ public class MerchantsController : ControllerBase
 {
     private readonly MerchantService _merchantService;
     private readonly EntityAnalyticsService _entityAnalyticsService;
+    private readonly AuditLogService _auditLogService;
 
     public MerchantsController(
         MerchantService merchantService,
-        EntityAnalyticsService entityAnalyticsService)
+        EntityAnalyticsService entityAnalyticsService,
+        AuditLogService auditLogService)
     {
         _merchantService = merchantService;
         _entityAnalyticsService = entityAnalyticsService;
+        _auditLogService = auditLogService;
     }
 
     [Authorize(Policy = AuthorizationPolicies.StaffRead)]
@@ -64,6 +68,13 @@ public class MerchantsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var merchant = await _merchantService.CreateMerchantAsync(request, cancellationToken);
+        await WriteMerchantAuditAsync(
+            AuditActions.MerchantCreated,
+            merchant.Id,
+            $"Merchant {merchant.MerchantCode} created.",
+            new { merchant.MerchantCode, merchant.Name },
+            cancellationToken);
+
         return CreatedAtAction(
             nameof(GetMerchantById),
             new { id = merchant.Id },
@@ -78,6 +89,13 @@ public class MerchantsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var merchant = await _merchantService.UpdateMerchantAsync(id, request, cancellationToken);
+        await WriteMerchantAuditAsync(
+            AuditActions.MerchantUpdated,
+            merchant.Id,
+            $"Merchant {merchant.MerchantCode} updated.",
+            new { merchant.MerchantCode, merchant.Name, merchant.IsActive },
+            cancellationToken);
+
         return Ok(ApiResponse<MerchantDto>.Ok(merchant, "Merchant updated."));
     }
 
@@ -88,6 +106,13 @@ public class MerchantsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var merchant = await _merchantService.ActivateMerchantAsync(id, cancellationToken);
+        await WriteMerchantAuditAsync(
+            AuditActions.MerchantActivated,
+            merchant.Id,
+            $"Merchant {merchant.MerchantCode} activated.",
+            new { merchant.MerchantCode },
+            cancellationToken);
+
         return Ok(ApiResponse<MerchantDto>.Ok(merchant, "Merchant activated."));
     }
 
@@ -98,6 +123,36 @@ public class MerchantsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var merchant = await _merchantService.DeactivateMerchantAsync(id, cancellationToken);
+        await WriteMerchantAuditAsync(
+            AuditActions.MerchantDeactivated,
+            merchant.Id,
+            $"Merchant {merchant.MerchantCode} deactivated.",
+            new { merchant.MerchantCode },
+            cancellationToken);
+
         return Ok(ApiResponse<MerchantDto>.Ok(merchant, "Merchant deactivated."));
+    }
+
+    private Task WriteMerchantAuditAsync(
+        string action,
+        Guid merchantId,
+        string summary,
+        object details,
+        CancellationToken cancellationToken)
+    {
+        return _auditLogService.WriteAsync(
+            new AuditEntry
+            {
+                UserId = User.GetOptionalUserId(),
+                UserEmail = User.GetOptionalEmail(),
+                UserName = User.GetOptionalDisplayName(),
+                Action = action,
+                EntityType = AuditEntityTypes.Merchant,
+                EntityId = merchantId.ToString(),
+                Summary = summary,
+                Details = AuditHttpExtensions.ToAuditJson(details),
+                IpAddress = HttpContext.GetClientIpAddress()
+            },
+            cancellationToken);
     }
 }

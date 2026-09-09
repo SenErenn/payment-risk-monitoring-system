@@ -5,7 +5,7 @@ import { listCards } from '../api/cards'
 import type { Card } from '../api/cardTypes'
 import { listMerchants } from '../api/merchants'
 import type { Merchant } from '../api/merchantTypes'
-import { createTransaction, listTransactions } from '../api/transactions'
+import { createTransaction, exportTransactions, listTransactions } from '../api/transactions'
 import type {
   CurrencyCode,
   PagedResult,
@@ -154,6 +154,8 @@ export function TransactionsPage() {
   const [isPaying, setIsPaying] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<Transaction | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   useEffect(() => {
     setSearchInput(searchFromUrl)
@@ -453,6 +455,34 @@ export function TransactionsPage() {
       sortDirectionFromUrl !== 'desc',
   )
 
+  async function handleExport(format: 'csv' | 'excel') {
+    setExportError(null)
+    setIsExporting(true)
+
+    try {
+      await exportTransactions({
+        format,
+        search: searchFromUrl,
+        status: statusFromUrl === 'all' ? null : statusFromUrl,
+        paymentType: paymentTypeFromUrl === 'all' ? null : paymentTypeFromUrl,
+        merchantId: merchantIdFromUrl || null,
+        cardId: cardIdFromUrl || null,
+        minAmount: parseOptionalNumber(minAmountFromUrl),
+        maxAmount: parseOptionalNumber(maxAmountFromUrl),
+        createdFrom: createdFromFromUrl || null,
+        createdTo: createdToFromUrl || null,
+        sortBy: sortByFromUrl,
+        sortDirection: sortDirectionFromUrl,
+      })
+    } catch (err) {
+      setExportError(
+        err instanceof ApiError ? err.message : t('transactions.exportFailed'),
+      )
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   async function handleMakePayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setPayError(null)
@@ -508,12 +538,32 @@ export function TransactionsPage() {
 
   return (
     <div className="page page-wide">
-      <div className="page-header">
+      <div className="page-header page-header-row">
         <div>
           <h1>{t('transactions.title')}</h1>
           <p>{t('transactions.subtitle')}</p>
         </div>
+        <div className="header-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={isExporting}
+            onClick={() => void handleExport('csv')}
+          >
+            {isExporting ? t('transactions.exporting') : t('transactions.exportCsv')}
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={isExporting}
+            onClick={() => void handleExport('excel')}
+          >
+            {isExporting ? t('transactions.exporting') : t('transactions.exportExcel')}
+          </button>
+        </div>
       </div>
+
+      {exportError ? <div className="form-error">{exportError}</div> : null}
 
       {canCreate ? (
         <form className="panel-form" onSubmit={handleMakePayment}>

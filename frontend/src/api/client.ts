@@ -68,3 +68,54 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   return payload.data as T
 }
+
+export async function downloadAuthenticatedFile(
+  path: string,
+  fallbackFileName: string,
+): Promise<void> {
+  if (tokenStorage.isTokenExpired()) {
+    tokenStorage.clear()
+    throw new ApiError('Authentication is required.', 401)
+  }
+
+  const token = tokenStorage.getToken()
+  const headers = new Headers()
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, { headers })
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      tokenStorage.clear()
+    }
+
+    let message = 'Download failed.'
+    try {
+      const payload = (await response.json()) as ApiResponse<unknown>
+      message = payload.message ?? message
+    } catch {
+      // binary/error body without JSON
+    }
+
+    throw new ApiError(message, response.status)
+  }
+
+  const blob = await response.blob()
+  const disposition = response.headers.get('Content-Disposition')
+  let fileName = fallbackFileName
+  const match = disposition?.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i)
+  if (match?.[1]) {
+    fileName = decodeURIComponent(match[1].replace(/"/g, ''))
+  }
+
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = fileName
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  URL.revokeObjectURL(url)
+}
