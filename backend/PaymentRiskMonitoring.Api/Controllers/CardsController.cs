@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PaymentRiskMonitoring.Api.Authorization;
+using PaymentRiskMonitoring.Api.DTOs.Analytics;
 using PaymentRiskMonitoring.Api.DTOs.Cards;
 using PaymentRiskMonitoring.Api.Enums;
 using PaymentRiskMonitoring.Api.Models.Responses;
@@ -13,10 +14,14 @@ namespace PaymentRiskMonitoring.Api.Controllers;
 public class CardsController : ControllerBase
 {
     private readonly CardService _cardService;
+    private readonly EntityAnalyticsService _entityAnalyticsService;
 
-    public CardsController(CardService cardService)
+    public CardsController(
+        CardService cardService,
+        EntityAnalyticsService entityAnalyticsService)
     {
         _cardService = cardService;
+        _entityAnalyticsService = entityAnalyticsService;
     }
 
     [Authorize(Policy = AuthorizationPolicies.AnalystOrAdmin)]
@@ -37,6 +42,20 @@ public class CardsController : ControllerBase
     {
         var card = await _cardService.GetCardByIdAsync(id, cancellationToken);
         return Ok(ApiResponse<CardDto>.Ok(card, "Card retrieved."));
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.AnalystOrAdmin)]
+    [HttpGet("{id:guid}/analytics")]
+    public async Task<ActionResult<ApiResponse<CardAnalyticsDto>>> GetCardAnalytics(
+        Guid id,
+        [FromQuery] AnalyticsRangeQuery query,
+        CancellationToken cancellationToken)
+    {
+        var analytics = await _entityAnalyticsService.GetCardAnalyticsAsync(
+            id,
+            query,
+            cancellationToken);
+        return Ok(ApiResponse<CardAnalyticsDto>.Ok(analytics, "Card analytics retrieved."));
     }
 
     [Authorize(Policy = AuthorizationPolicies.AdminOnly)]

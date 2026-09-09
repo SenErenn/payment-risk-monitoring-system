@@ -51,6 +51,8 @@ export function RiskAlertsPage() {
     (searchParams.get('sortBy') as RiskAlertSortBy) || 'createdAt'
   const sortDirectionFromUrl =
     (searchParams.get('sortDirection') as SortDirection) || 'desc'
+  const merchantIdFromUrl = searchParams.get('merchantId') ?? ''
+  const cardIdFromUrl = searchParams.get('cardId') ?? ''
 
   const [searchInput, setSearchInput] = useState(searchFromUrl)
   const [result, setResult] = useState<PagedResult<RiskAlert> | null>(null)
@@ -75,6 +77,8 @@ export function RiskAlertsPage() {
           search: searchFromUrl || undefined,
           status: statusFromUrl === 'all' ? null : statusFromUrl,
           riskLevel: riskLevelFromUrl === 'all' ? null : riskLevelFromUrl,
+          merchantId: merchantIdFromUrl || null,
+          cardId: cardIdFromUrl || null,
           sortBy: sortByFromUrl,
           sortDirection: sortDirectionFromUrl,
         })
@@ -110,6 +114,8 @@ export function RiskAlertsPage() {
     riskLevelFromUrl,
     sortByFromUrl,
     sortDirectionFromUrl,
+    merchantIdFromUrl,
+    cardIdFromUrl,
     t,
   ])
 
@@ -149,6 +155,14 @@ export function RiskAlertsPage() {
       params.set('sortDirection', sortDirection)
     }
 
+    if (merchantIdFromUrl) {
+      params.set('merchantId', merchantIdFromUrl)
+    }
+
+    if (cardIdFromUrl) {
+      params.set('cardId', cardIdFromUrl)
+    }
+
     if (nextPage > 1) {
       params.set('page', String(nextPage))
     }
@@ -170,7 +184,9 @@ export function RiskAlertsPage() {
     statusFromUrl !== 'Open' ||
     riskLevelFromUrl !== 'all' ||
     sortByFromUrl !== 'createdAt' ||
-    sortDirectionFromUrl !== 'desc'
+    sortDirectionFromUrl !== 'desc' ||
+    Boolean(merchantIdFromUrl) ||
+    Boolean(cardIdFromUrl)
 
   return (
     <div className="page page-wide">

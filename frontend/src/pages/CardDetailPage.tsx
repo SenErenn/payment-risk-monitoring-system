@@ -6,14 +6,17 @@ import {
   blockCard,
   deactivateCard,
   getCard,
+  getCardAnalytics,
   updateCard,
   updateCardStatus,
 } from '../api/cards'
-import type { Card } from '../api/cardTypes'
+import type { Card, CardAnalytics } from '../api/cardTypes'
 import { listTransactions } from '../api/transactions'
 import type { Transaction } from '../api/transactionTypes'
+import { useAuth } from '../auth/AuthContext'
 import { useLocale, useT } from '../i18n'
 import { cardStatusClass, formatDateTime, formatMoney } from './cardUi'
+import { defaultLast24HoursLocal } from './dateRangeUi'
 import {
   formatAmount,
   formatDateTime as formatTxDateTime,
@@ -23,10 +26,13 @@ import {
 export function CardDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { hasRole } = useAuth()
   const t = useT()
   const { locale } = useLocale()
   const dateLocale = locale === 'tr' ? 'tr-TR' : 'en-US'
+  const canOpenAlerts = hasRole('Admin', 'Analyst')
 
+  const initialRange = defaultLast24HoursLocal()
   const [card, setCard] = useState<Card | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +48,13 @@ export function CardDetailPage() {
   const [transactionsError, setTransactionsError] = useState<string | null>(
     null,
   )
+  const [fromLocal, setFromLocal] = useState(initialRange.fromLocal)
+  const [toLocal, setToLocal] = useState(initialRange.toLocal)
+  const [appliedFrom, setAppliedFrom] = useState(initialRange.fromLocal)
+  const [appliedTo, setAppliedTo] = useState(initialRange.toLocal)
+  const [analytics, setAnalytics] = useState<CardAnalytics | null>(null)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
+  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -114,6 +127,48 @@ export function CardDetailPage() {
       cancelled = true
     }
   }, [id, t])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAnalytics() {
+      if (!id) {
+        return
+      }
+
+      setIsAnalyticsLoading(true)
+      setAnalyticsError(null)
+
+      try {
+        const data = await getCardAnalytics(id, {
+          from: new Date(appliedFrom).toISOString(),
+          to: new Date(appliedTo).toISOString(),
+        })
+        if (!cancelled) {
+          setAnalytics(data)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setAnalytics(null)
+          setAnalyticsError(
+            err instanceof ApiError
+              ? err.message
+              : t('cards.analyticsLoadFailed'),
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setIsAnalyticsLoading(false)
+        }
+      }
+    }
+
+    void loadAnalytics()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id, appliedFrom, appliedTo, t])
 
   async function handleSaveLimits(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -252,6 +307,97 @@ export function CardDetailPage() {
       </div>
 
       {actionError ? <div className="form-error">{actionError}</div> : null}
+
+      <form
+        className="filter-panel"
+        onSubmit={(event) => {
+          event.preventDefault()
+          setAppliedFrom(fromLocal)
+          setAppliedTo(toLocal)
+        }}
+      >
+        <h2>{t('cards.analyticsTitle')}</h2>
+        <p className="form-hint">{t('cards.analyticsHint')}</p>
+        <div className="form-grid form-grid-filters">
+          <label htmlFor="cardAnalyticsFrom">
+            {t('dashboard.from')}
+            <input
+              id="cardAnalyticsFrom"
+              type="datetime-local"
+              value={fromLocal}
+              onChange={(event) => setFromLocal(event.target.value)}
+            />
+          </label>
+          <label htmlFor="cardAnalyticsTo">
+            {t('dashboard.to')}
+            <input
+              id="cardAnalyticsTo"
+              type="datetime-local"
+              value={toLocal}
+              onChange={(event) => setToLocal(event.target.value)}
+            />
+          </label>
+        </div>
+        <button type="submit" className="primary-button">
+          {t('common.applyFilters')}
+        </button>
+      </form>
+
+      {analyticsError ? <div className="form-error">{analyticsError}</div> : null}
+      {isAnalyticsLoading ? (
+        <div className="notice-card">
+          <p>{t('cards.analyticsLoading')}</p>
+        </div>
+      ) : null}
+
+      {!isAnalyticsLoading && analytics ? (
+        <>
+          <p className="muted-text dashboard-range-meta">
+            {t('dashboard.rangeMeta', {
+              from: formatTxDateTime(analytics.fromUtc, dateLocale),
+              to: formatTxDateTime(analytics.toUtc, dateLocale),
+            })}
+          </p>
+          <div className="info-grid kpi-grid">
+            <div className="info-card">
+              <span className="info-label">{t('cards.kpiSpending')}</span>
+              <strong>
+                {formatAmount(analytics.spending, analytics.currency)}
+              </strong>
+            </div>
+            <div className="info-card">
+              <span className="info-label">{t('cards.kpiDeclines')}</span>
+              <strong>{analytics.declinedCount}</strong>
+            </div>
+            <div className="info-card">
+              <span className="info-label">{t('cards.kpiRiskAlerts')}</span>
+              <strong>{analytics.riskAlertCount}</strong>
+            </div>
+            <div className="info-card">
+              <span className="info-label">{t('cards.availableLimit')}</span>
+              <strong>
+                {formatAmount(analytics.availableLimit, analytics.currency)}
+              </strong>
+            </div>
+          </div>
+          <div className="action-row detail-links">
+            <Link
+              className="text-link"
+              to={`/transactions?cardId=${card.id}`}
+            >
+              {t('cards.viewAllTx')}
+            </Link>
+            {canOpenAlerts ? (
+              <Link
+                className="text-link"
+                to={`/risk-alerts?cardId=${card.id}`}
+              >
+                {t('cards.viewAlerts')}
+              </Link>
+            ) : null}
+          </div>
+        </>
+      ) : null}
 
       <div className="info-grid">
         <div className="info-card">

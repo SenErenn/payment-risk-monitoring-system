@@ -1,7 +1,9 @@
 import { apiRequest } from './client'
 import type {
+  AnalyticsRangeParams,
   CreateMerchantPayload,
   Merchant,
+  MerchantAnalytics,
   MerchantListParams,
   PagedResult,
   UpdateMerchantPayload,
@@ -32,6 +34,23 @@ export async function listMerchants(
 
 export async function getMerchant(id: string): Promise<Merchant> {
   return apiRequest<Merchant>(`/api/merchants/${id}`)
+}
+
+export async function getMerchantAnalytics(
+  id: string,
+  params: AnalyticsRangeParams = {},
+): Promise<MerchantAnalytics> {
+  const query = new URLSearchParams()
+  if (params.from) {
+    query.set('from', params.from)
+  }
+  if (params.to) {
+    query.set('to', params.to)
+  }
+  const suffix = query.toString()
+  return apiRequest<MerchantAnalytics>(
+    `/api/merchants/${id}/analytics${suffix ? `?${suffix}` : ''}`,
+  )
 }
 
 export async function createMerchant(

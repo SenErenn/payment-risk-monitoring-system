@@ -36,3 +36,22 @@ export interface UpdateMerchantPayload {
   name: string
   category: string
 }
+
+export interface AnalyticsRangeParams {
+  from?: string | null
+  to?: string | null
+}
+
+export interface MerchantAnalytics {
+  merchantId: string
+  fromUtc: string
+  toUtc: string
+  volume: number
+  currency: string
+  transactionCount: number
+  approvedCount: number
+  declinedCount: number
+  approvalRate: number
+  highRiskCount: number
+  riskAlertCount: number
+}

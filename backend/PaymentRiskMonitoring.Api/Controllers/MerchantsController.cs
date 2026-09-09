@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PaymentRiskMonitoring.Api.Authorization;
+using PaymentRiskMonitoring.Api.DTOs.Analytics;
 using PaymentRiskMonitoring.Api.DTOs.Merchants;
 using PaymentRiskMonitoring.Api.Models.Responses;
 using PaymentRiskMonitoring.Api.Services;
@@ -12,10 +13,14 @@ namespace PaymentRiskMonitoring.Api.Controllers;
 public class MerchantsController : ControllerBase
 {
     private readonly MerchantService _merchantService;
+    private readonly EntityAnalyticsService _entityAnalyticsService;
 
-    public MerchantsController(MerchantService merchantService)
+    public MerchantsController(
+        MerchantService merchantService,
+        EntityAnalyticsService entityAnalyticsService)
     {
         _merchantService = merchantService;
+        _entityAnalyticsService = entityAnalyticsService;
     }
 
     [Authorize(Policy = AuthorizationPolicies.StaffRead)]
@@ -36,6 +41,20 @@ public class MerchantsController : ControllerBase
     {
         var merchant = await _merchantService.GetMerchantByIdAsync(id, cancellationToken);
         return Ok(ApiResponse<MerchantDto>.Ok(merchant, "Merchant retrieved."));
+    }
+
+    [Authorize(Policy = AuthorizationPolicies.StaffRead)]
+    [HttpGet("{id:guid}/analytics")]
+    public async Task<ActionResult<ApiResponse<MerchantAnalyticsDto>>> GetMerchantAnalytics(
+        Guid id,
+        [FromQuery] AnalyticsRangeQuery query,
+        CancellationToken cancellationToken)
+    {
+        var analytics = await _entityAnalyticsService.GetMerchantAnalyticsAsync(
+            id,
+            query,
+            cancellationToken);
+        return Ok(ApiResponse<MerchantAnalyticsDto>.Ok(analytics, "Merchant analytics retrieved."));
     }
 
     [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
