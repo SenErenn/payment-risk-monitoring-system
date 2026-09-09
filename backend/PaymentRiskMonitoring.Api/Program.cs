@@ -52,6 +52,7 @@ builder.Services.AddScoped<RefundService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<RiskAnalysisService>();
 builder.Services.AddScoped<RiskAlertService>();
+builder.Services.AddScoped<RiskRuleService>();
 
 if (builder.Environment.IsDevelopment())
 {

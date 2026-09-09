@@ -15,6 +15,7 @@ import { MerchantsPage } from './pages/MerchantsPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { RiskAlertDetailPage } from './pages/RiskAlertDetailPage'
 import { RiskAlertsPage } from './pages/RiskAlertsPage'
+import { RiskRulesPage } from './pages/RiskRulesPage'
 import { TransactionDetailPage } from './pages/TransactionDetailPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import './App.css'
@@ -58,16 +59,7 @@ function App() {
                 <Route element={<RoleRoute roles={['Admin']} />}>
                   <Route path="/cards" element={<CardsPage />} />
                   <Route path="/cards/:id" element={<CardDetailPage />} />
-                  <Route
-                    path="/risk-rules"
-                    element={
-                      <PlaceholderPage
-                        titleKey="placeholder.riskRulesTitle"
-                        descriptionKey="placeholder.riskRulesDesc"
-                        comingInKey="placeholder.laterPr"
-                      />
-                    }
-                  />
+                  <Route path="/risk-rules" element={<RiskRulesPage />} />
                   <Route
                     path="/users"
                     element={

@@ -7,33 +7,40 @@ using PaymentRiskMonitoring.Api.Models.Risk;
 namespace PaymentRiskMonitoring.Api.Services;
 
 /// <summary>
-/// Central risk analysis engine with foundation declines and advanced additive rules (PR-021).
+/// Central risk analysis engine. Additive rule thresholds/points come from RiskRules (PR-025).
 /// </summary>
 public class RiskAnalysisService
 {
+    public const string HighAmountCode = "HIGH_AMOUNT";
+    public const string HighLimitUsageCode = "HIGH_LIMIT_USAGE";
+    public const string VelocityCode = "VELOCITY";
+    public const string MultipleDeclinesCode = "MULTIPLE_DECLINES";
+    public const string NightHighAmountCode = "NIGHT_HIGH_AMOUNT";
+    public const string SuddenAmountIncreaseCode = "SUDDEN_AMOUNT_INCREASE";
+
     public const int LowMaxScore = 39;
     public const int MediumMaxScore = 69;
     public const int MaxScore = 100;
     public const int BaselineApprovedScore = 15;
 
-    public const decimal HighAmountThreshold = 10_000m;
-    public const decimal HighUsageRatioThreshold = 0.8m;
-    public const decimal NightHighAmountThreshold = 5_000m;
-    public const decimal SuddenIncreaseMultiplier = 3m;
+    public const decimal DefaultHighAmountThreshold = 10_000m;
+    public const decimal DefaultHighUsageRatioThreshold = 0.8m;
+    public const decimal DefaultNightHighAmountThreshold = 5_000m;
+    public const decimal DefaultSuddenIncreaseMultiplier = 3m;
 
     public const int VelocityWindowMinutes = 5;
-    public const int VelocityPriorCountThreshold = 2;
+    public const int DefaultVelocityPriorCountThreshold = 2;
     public const int MultipleDeclinesWindowHours = 24;
-    public const int MultipleDeclinesThreshold = 2;
+    public const int DefaultMultipleDeclinesThreshold = 2;
     public const int SuddenIncreaseLookbackCount = 5;
     public const int SuddenIncreaseMinHistory = 3;
 
-    public const int HighAmountPoints = 45;
-    public const int HighLimitUsagePoints = 20;
-    public const int VelocityPoints = 25;
-    public const int MultipleDeclinesPoints = 25;
-    public const int NightHighAmountPoints = 20;
-    public const int SuddenAmountIncreasePoints = 20;
+    public const int DefaultHighAmountPoints = 45;
+    public const int DefaultHighLimitUsagePoints = 20;
+    public const int DefaultVelocityPoints = 25;
+    public const int DefaultMultipleDeclinesPoints = 25;
+    public const int DefaultNightHighAmountPoints = 20;
+    public const int DefaultSuddenAmountIncreasePoints = 20;
 
     public const int InsufficientLimitScore = 70;
     public const int InactiveMerchantScore = 75;
@@ -117,6 +124,7 @@ public class RiskAnalysisService
         DateTime utcNow,
         CancellationToken cancellationToken)
     {
+        var rules = await LoadRuleSettingsAsync(cancellationToken);
         var history = await LoadCardHistoryAsync(card.Id, utcNow, cancellationToken);
         var reasons = new List<RiskReason>();
         var score = 0;
@@ -132,12 +140,36 @@ public class RiskAnalysisService
             score += reason.Points;
         }
 
-        Apply(EvaluateHighAmount(amount));
-        Apply(EvaluateHighLimitUsage(card, amount));
-        Apply(EvaluateVelocity(history, utcNow));
-        Apply(EvaluateMultipleDeclines(history, utcNow));
-        Apply(EvaluateNightHighAmount(amount, utcNow));
-        Apply(EvaluateSuddenAmountIncrease(amount, history));
+        Apply(EvaluateHighAmount(amount, ResolveRule(
+            rules,
+            HighAmountCode,
+            DefaultHighAmountThreshold,
+            DefaultHighAmountPoints)));
+        Apply(EvaluateHighLimitUsage(card, amount, ResolveRule(
+            rules,
+            HighLimitUsageCode,
+            DefaultHighUsageRatioThreshold,
+            DefaultHighLimitUsagePoints)));
+        Apply(EvaluateVelocity(history, utcNow, ResolveRule(
+            rules,
+            VelocityCode,
+            DefaultVelocityPriorCountThreshold,
+            DefaultVelocityPoints)));
+        Apply(EvaluateMultipleDeclines(history, utcNow, ResolveRule(
+            rules,
+            MultipleDeclinesCode,
+            DefaultMultipleDeclinesThreshold,
+            DefaultMultipleDeclinesPoints)));
+        Apply(EvaluateNightHighAmount(amount, utcNow, ResolveRule(
+            rules,
+            NightHighAmountCode,
+            DefaultNightHighAmountThreshold,
+            DefaultNightHighAmountPoints)));
+        Apply(EvaluateSuddenAmountIncrease(amount, history, ResolveRule(
+            rules,
+            SuddenAmountIncreaseCode,
+            DefaultSuddenIncreaseMultiplier,
+            DefaultSuddenAmountIncreasePoints)));
 
         if (reasons.Count == 0)
         {
@@ -167,6 +199,33 @@ public class RiskAnalysisService
         };
     }
 
+    private async Task<Dictionary<string, RuleSettings>> LoadRuleSettingsAsync(
+        CancellationToken cancellationToken)
+    {
+        var rules = await _dbContext.RiskRules
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return rules.ToDictionary(
+            rule => rule.Code,
+            rule => new RuleSettings(rule.IsEnabled, rule.Threshold, rule.Points),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static RuleSettings ResolveRule(
+        IReadOnlyDictionary<string, RuleSettings> rules,
+        string code,
+        decimal defaultThreshold,
+        int defaultPoints)
+    {
+        if (rules.TryGetValue(code, out var settings))
+        {
+            return settings;
+        }
+
+        return new RuleSettings(true, defaultThreshold, defaultPoints);
+    }
+
     private async Task<List<Transaction>> LoadCardHistoryAsync(
         Guid cardId,
         DateTime utcNow,
@@ -183,104 +242,135 @@ public class RiskAnalysisService
             .ToListAsync(cancellationToken);
     }
 
-    public static RiskReason? EvaluateHighAmount(decimal amount)
+    public static RiskReason? EvaluateHighAmount(decimal amount, RuleSettings rule)
     {
-        if (amount < HighAmountThreshold)
+        if (!rule.IsEnabled || amount < rule.Threshold)
         {
             return null;
         }
 
         return new RiskReason
         {
-            Code = "HIGH_AMOUNT",
-            Message = $"Amount is at or above {HighAmountThreshold:0}.",
-            Points = HighAmountPoints
+            Code = HighAmountCode,
+            Message = $"Amount is at or above {rule.Threshold:0.##}.",
+            Points = rule.Points
         };
     }
 
-    public static RiskReason? EvaluateHighLimitUsage(Card card, decimal amount)
+    public static RiskReason? EvaluateHighLimitUsage(
+        Card card,
+        decimal amount,
+        RuleSettings rule)
     {
+        if (!rule.IsEnabled)
+        {
+            return null;
+        }
+
         var usageRatio = card.CreditLimit <= 0
             ? 0m
             : (card.CreditLimit - card.AvailableLimit + amount) / card.CreditLimit;
 
-        if (usageRatio < HighUsageRatioThreshold)
+        if (usageRatio < rule.Threshold)
         {
             return null;
         }
 
         return new RiskReason
         {
-            Code = "HIGH_LIMIT_USAGE",
-            Message = $"Projected credit usage is at or above {HighUsageRatioThreshold:P0}.",
-            Points = HighLimitUsagePoints
+            Code = HighLimitUsageCode,
+            Message = $"Projected credit usage is at or above {rule.Threshold:P0}.",
+            Points = rule.Points
         };
     }
 
     public static RiskReason? EvaluateVelocity(
         IReadOnlyList<Transaction> history,
-        DateTime utcNow)
+        DateTime utcNow,
+        RuleSettings rule)
     {
+        if (!rule.IsEnabled)
+        {
+            return null;
+        }
+
         var windowStart = utcNow.AddMinutes(-VelocityWindowMinutes);
         var priorCount = history.Count(transaction => transaction.CreatedAt >= windowStart);
+        var threshold = (int)decimal.Truncate(rule.Threshold);
 
-        if (priorCount < VelocityPriorCountThreshold)
+        if (priorCount < threshold)
         {
             return null;
         }
 
         return new RiskReason
         {
-            Code = "VELOCITY",
+            Code = VelocityCode,
             Message =
                 $"Card has {priorCount} transactions in the last {VelocityWindowMinutes} minutes.",
-            Points = VelocityPoints
+            Points = rule.Points
         };
     }
 
     public static RiskReason? EvaluateMultipleDeclines(
         IReadOnlyList<Transaction> history,
-        DateTime utcNow)
+        DateTime utcNow,
+        RuleSettings rule)
     {
+        if (!rule.IsEnabled)
+        {
+            return null;
+        }
+
         var windowStart = utcNow.AddHours(-MultipleDeclinesWindowHours);
         var declineCount = history.Count(transaction =>
             transaction.Status == TransactionStatus.Declined &&
             transaction.CreatedAt >= windowStart);
+        var threshold = (int)decimal.Truncate(rule.Threshold);
 
-        if (declineCount < MultipleDeclinesThreshold)
+        if (declineCount < threshold)
         {
             return null;
         }
 
         return new RiskReason
         {
-            Code = "MULTIPLE_DECLINES",
+            Code = MultipleDeclinesCode,
             Message =
                 $"Card has {declineCount} declines in the last {MultipleDeclinesWindowHours} hours.",
-            Points = MultipleDeclinesPoints
+            Points = rule.Points
         };
     }
 
-    public static RiskReason? EvaluateNightHighAmount(decimal amount, DateTime utcNow)
+    public static RiskReason? EvaluateNightHighAmount(
+        decimal amount,
+        DateTime utcNow,
+        RuleSettings rule)
     {
-        if (!IsNightUtc(utcNow) || amount < NightHighAmountThreshold)
+        if (!rule.IsEnabled || !IsNightUtc(utcNow) || amount < rule.Threshold)
         {
             return null;
         }
 
         return new RiskReason
         {
-            Code = "NIGHT_HIGH_AMOUNT",
+            Code = NightHighAmountCode,
             Message =
                 $"High amount ({amount:0.##}) during night hours (UTC 22:00–05:59).",
-            Points = NightHighAmountPoints
+            Points = rule.Points
         };
     }
 
     public static RiskReason? EvaluateSuddenAmountIncrease(
         decimal amount,
-        IReadOnlyList<Transaction> history)
+        IReadOnlyList<Transaction> history,
+        RuleSettings rule)
     {
+        if (!rule.IsEnabled)
+        {
+            return null;
+        }
+
         var recentApproved = history
             .Where(transaction => transaction.Status == TransactionStatus.Approved)
             .Take(SuddenIncreaseLookbackCount)
@@ -298,7 +388,7 @@ public class RiskAnalysisService
             return null;
         }
 
-        var threshold = average * SuddenIncreaseMultiplier;
+        var threshold = average * rule.Threshold;
         if (amount < threshold)
         {
             return null;
@@ -306,10 +396,10 @@ public class RiskAnalysisService
 
         return new RiskReason
         {
-            Code = "SUDDEN_AMOUNT_INCREASE",
+            Code = SuddenAmountIncreaseCode,
             Message =
-                $"Amount {amount:0.##} is at least {SuddenIncreaseMultiplier:0}× the recent approved average ({average:0.##}).",
-            Points = SuddenAmountIncreasePoints
+                $"Amount {amount:0.##} is at least {rule.Threshold:0.##}× the recent approved average ({average:0.##}).",
+            Points = rule.Points
         };
     }
 
@@ -336,4 +426,6 @@ public class RiskAnalysisService
             DecisionMessage = decisionMessage
         };
     }
+
+    public readonly record struct RuleSettings(bool IsEnabled, decimal Threshold, int Points);
 }

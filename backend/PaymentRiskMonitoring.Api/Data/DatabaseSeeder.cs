@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PaymentRiskMonitoring.Api.Entities;
 using PaymentRiskMonitoring.Api.Enums;
+using PaymentRiskMonitoring.Api.Services;
 
 namespace PaymentRiskMonitoring.Api.Data;
 
@@ -19,6 +20,7 @@ public static class DatabaseSeeder
         await SeedMerchantsAsync(dbContext, logger);
         await SeedCardsAsync(dbContext, logger);
         await SeedTransactionsAsync(dbContext, logger);
+        await SeedRiskRulesAsync(dbContext, logger);
     }
 
     private static async Task SeedUsersAsync(
@@ -260,6 +262,120 @@ public static class DatabaseSeeder
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation("Seeded {TransactionCount} development transactions.", transactions.Count);
+    }
+
+    private static async Task SeedRiskRulesAsync(AppDbContext dbContext, ILogger logger)
+    {
+        var now = DateTime.UtcNow;
+        var defaults = new List<RiskRule>
+        {
+            CreateRiskRule(
+                id: Guid.Parse("a1111111-1111-1111-1111-111111111111"),
+                code: RiskAnalysisService.HighAmountCode,
+                name: "High amount",
+                description: "Flags payments at or above the configured amount threshold.",
+                threshold: RiskAnalysisService.DefaultHighAmountThreshold,
+                unit: RiskRuleThresholdUnit.Amount,
+                points: RiskAnalysisService.DefaultHighAmountPoints,
+                sortOrder: 1,
+                now),
+            CreateRiskRule(
+                id: Guid.Parse("a2222222-2222-2222-2222-222222222222"),
+                code: RiskAnalysisService.HighLimitUsageCode,
+                name: "High limit usage",
+                description: "Flags payments that push projected credit usage to the ratio threshold.",
+                threshold: RiskAnalysisService.DefaultHighUsageRatioThreshold,
+                unit: RiskRuleThresholdUnit.Ratio,
+                points: RiskAnalysisService.DefaultHighLimitUsagePoints,
+                sortOrder: 2,
+                now),
+            CreateRiskRule(
+                id: Guid.Parse("a3333333-3333-3333-3333-333333333333"),
+                code: RiskAnalysisService.VelocityCode,
+                name: "Velocity",
+                description: "Flags cards with too many transactions in a short time window.",
+                threshold: RiskAnalysisService.DefaultVelocityPriorCountThreshold,
+                unit: RiskRuleThresholdUnit.Count,
+                points: RiskAnalysisService.DefaultVelocityPoints,
+                sortOrder: 3,
+                now),
+            CreateRiskRule(
+                id: Guid.Parse("a4444444-4444-4444-4444-444444444444"),
+                code: RiskAnalysisService.MultipleDeclinesCode,
+                name: "Multiple declines",
+                description: "Flags cards with repeated declines in the lookback window.",
+                threshold: RiskAnalysisService.DefaultMultipleDeclinesThreshold,
+                unit: RiskRuleThresholdUnit.Count,
+                points: RiskAnalysisService.DefaultMultipleDeclinesPoints,
+                sortOrder: 4,
+                now),
+            CreateRiskRule(
+                id: Guid.Parse("a5555555-5555-5555-5555-555555555555"),
+                code: RiskAnalysisService.NightHighAmountCode,
+                name: "Night high amount",
+                description: "Flags high-amount payments during night hours (UTC 22:00–05:59).",
+                threshold: RiskAnalysisService.DefaultNightHighAmountThreshold,
+                unit: RiskRuleThresholdUnit.Amount,
+                points: RiskAnalysisService.DefaultNightHighAmountPoints,
+                sortOrder: 5,
+                now),
+            CreateRiskRule(
+                id: Guid.Parse("a6666666-6666-6666-6666-666666666666"),
+                code: RiskAnalysisService.SuddenAmountIncreaseCode,
+                name: "Sudden amount increase",
+                description: "Flags amounts that jump above the recent approved average by the multiplier.",
+                threshold: RiskAnalysisService.DefaultSuddenIncreaseMultiplier,
+                unit: RiskRuleThresholdUnit.Multiplier,
+                points: RiskAnalysisService.DefaultSuddenAmountIncreasePoints,
+                sortOrder: 6,
+                now)
+        };
+
+        var existingCodes = await dbContext.RiskRules
+            .Select(rule => rule.Code)
+            .ToListAsync();
+
+        var missing = defaults
+            .Where(rule => !existingCodes.Contains(rule.Code, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+
+        if (missing.Count == 0)
+        {
+            logger.LogInformation("Risk rule seed skipped because all default rules already exist.");
+            return;
+        }
+
+        dbContext.RiskRules.AddRange(missing);
+        await dbContext.SaveChangesAsync();
+
+        logger.LogInformation("Seeded {RuleCount} risk rules.", missing.Count);
+    }
+
+    private static RiskRule CreateRiskRule(
+        Guid id,
+        string code,
+        string name,
+        string description,
+        decimal threshold,
+        RiskRuleThresholdUnit unit,
+        int points,
+        int sortOrder,
+        DateTime timestamp)
+    {
+        return new RiskRule
+        {
+            Id = id,
+            Code = code,
+            Name = name,
+            Description = description,
+            Threshold = threshold,
+            ThresholdUnit = unit,
+            Points = points,
+            IsEnabled = true,
+            SortOrder = sortOrder,
+            CreatedAt = timestamp,
+            UpdatedAt = timestamp
+        };
     }
 
     private static User CreateUser(
