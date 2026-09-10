@@ -20,6 +20,11 @@ public static class AuthorizationExtensions
 
             options.AddPolicy(AuthorizationPolicies.StaffRead, policy =>
                 policy.RequireRole(AppRoles.Admin, AppRoles.Analyst, AppRoles.Viewer));
+
+            // Controllers must opt into [AllowAnonymous]; mutations cannot accidentally go public.
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
         });
 
         return services;

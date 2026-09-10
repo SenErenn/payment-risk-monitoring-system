@@ -150,12 +150,12 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false,
     ResponseWriter = WriteHealthCheckResponse
-});
+}).AllowAnonymous();
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = registration => registration.Tags.Contains("ready"),
     ResponseWriter = WriteHealthCheckResponse
-});
+}).AllowAnonymous();
 
 app.Logger.LogInformation("Payment Risk Monitoring System API started.");
 

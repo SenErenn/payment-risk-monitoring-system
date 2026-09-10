@@ -179,11 +179,11 @@ export function TransactionsPage() {
       setOptionsError(null)
 
       try {
-        const merchantPage = await listMerchants({ page: 1, pageSize: 100 })
+        const merchantPage = await listMerchants({ page: 1, pageSize: 500 })
         let cardItems: Card[] = []
 
         if (canViewCards) {
-          const cardPage = await listCards({ page: 1, pageSize: 100 })
+          const cardPage = await listCards({ page: 1, pageSize: 500 })
           cardItems = cardPage.items
         }
 

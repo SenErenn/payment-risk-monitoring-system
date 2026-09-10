@@ -45,12 +45,22 @@ public class RefundService
         CreateRefundRequest request,
         CancellationToken cancellationToken = default)
     {
-        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(
-            IsolationLevel.ReadCommitted,
-            cancellationToken);
+        await using var dbTransaction = _dbContext.Database.IsRelational()
+            ? await _dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.ReadCommitted,
+                cancellationToken)
+            : null;
 
         try
         {
+            if (_dbContext.Database.IsRelational())
+            {
+                // Lock the transaction row first so concurrent refunds serialize over-refund checks.
+                await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $"""SELECT 1 FROM "Transactions" WHERE "Id" = {transactionId} FOR UPDATE""",
+                    cancellationToken);
+            }
+
             var transaction = await _dbContext.Transactions
                 .Include(item => item.Refunds)
                 .FirstOrDefaultAsync(item => item.Id == transactionId, cancellationToken);
@@ -69,9 +79,12 @@ public class RefundService
                     ]);
             }
 
-            await _dbContext.Database.ExecuteSqlInterpolatedAsync(
-                $"""SELECT 1 FROM "Cards" WHERE "Id" = {transaction.CardId} FOR UPDATE""",
-                cancellationToken);
+            if (_dbContext.Database.IsRelational())
+            {
+                await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $"""SELECT 1 FROM "Cards" WHERE "Id" = {transaction.CardId} FOR UPDATE""",
+                    cancellationToken);
+            }
 
             var card = await _dbContext.Cards
                 .FirstOrDefaultAsync(item => item.Id == transaction.CardId, cancellationToken);
@@ -80,6 +93,8 @@ public class RefundService
             {
                 throw new NotFoundException("Card", transaction.CardId);
             }
+
+            await _dbContext.Entry(transaction).Collection(item => item.Refunds).LoadAsync(cancellationToken);
 
             var alreadyRefunded = transaction.Refunds.Sum(refund => refund.Amount);
             var refundableAmount = transaction.Amount - alreadyRefunded;
@@ -140,13 +155,16 @@ public class RefundService
 
             _dbContext.Refunds.Add(refund);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            await dbTransaction.CommitAsync(cancellationToken);
+            if (dbTransaction is not null)
+            {
+                await dbTransaction.CommitAsync(cancellationToken);
+            }
 
             return MapRefund(refund);
         }
         catch
         {
-            if (_dbContext.Database.CurrentTransaction is not null)
+            if (dbTransaction is not null)
             {
                 await dbTransaction.RollbackAsync(cancellationToken);
             }

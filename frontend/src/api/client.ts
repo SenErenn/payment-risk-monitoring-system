@@ -105,7 +105,7 @@ export async function downloadAuthenticatedFile(
   const blob = await response.blob()
   const disposition = response.headers.get('Content-Disposition')
   let fileName = fallbackFileName
-  const match = disposition?.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i)
+  const match = disposition?.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i)
   if (match?.[1]) {
     fileName = decodeURIComponent(match[1].replace(/"/g, ''))
   }

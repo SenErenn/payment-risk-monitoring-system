@@ -12,8 +12,8 @@ public class MerchantListQueryValidator : AbstractValidator<MerchantListQuery>
             .WithMessage("Page must be at least 1.");
 
         RuleFor(query => query.PageSize)
-            .InclusiveBetween(1, 100)
-            .WithMessage("Page size must be between 1 and 100.");
+            .InclusiveBetween(1, 500)
+            .WithMessage("Page size must be between 1 and 500.");
 
         RuleFor(query => query.Search)
             .MaximumLength(100)
