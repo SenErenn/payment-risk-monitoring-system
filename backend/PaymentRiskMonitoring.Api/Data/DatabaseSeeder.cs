@@ -347,6 +347,36 @@ public static class DatabaseSeeder
                 unit: RiskRuleThresholdUnit.Multiplier,
                 points: RiskAnalysisService.DefaultSuddenAmountIncreasePoints,
                 sortOrder: 6,
+                now),
+            CreateRiskRule(
+                id: Guid.Parse("a7777777-7777-7777-7777-777777777777"),
+                code: RiskAnalysisService.MultiMerchantBurstCode,
+                name: "Multiple merchants in short period",
+                description: "Flags when the same card is used at multiple distinct merchants in a short window.",
+                threshold: RiskAnalysisService.DefaultMultiMerchantBurstThreshold,
+                unit: RiskRuleThresholdUnit.Count,
+                points: RiskAnalysisService.DefaultMultiMerchantBurstPoints,
+                sortOrder: 7,
+                now),
+            CreateRiskRule(
+                id: Guid.Parse("a8888888-8888-8888-8888-888888888888"),
+                code: RiskAnalysisService.RepeatedSameAmountCode,
+                name: "Repeated same amount",
+                description: "Flags when the same card repeatedly attempts the same amount in a short window.",
+                threshold: RiskAnalysisService.DefaultRepeatedSameAmountThreshold,
+                unit: RiskRuleThresholdUnit.Count,
+                points: RiskAnalysisService.DefaultRepeatedSameAmountPoints,
+                sortOrder: 8,
+                now),
+            CreateRiskRule(
+                id: Guid.Parse("a9999999-9999-9999-9999-999999999999"),
+                code: RiskAnalysisService.DeclineThenSuccessCode,
+                name: "Success after repeated declines",
+                description: "Flags an approval that follows several declines on the same card in a short window.",
+                threshold: RiskAnalysisService.DefaultDeclineThenSuccessThreshold,
+                unit: RiskRuleThresholdUnit.Count,
+                points: RiskAnalysisService.DefaultDeclineThenSuccessPoints,
+                sortOrder: 9,
                 now)
         };
 

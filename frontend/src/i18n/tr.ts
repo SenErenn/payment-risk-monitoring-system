@@ -545,6 +545,9 @@ export const tr: Messages = {
       MULTIPLE_DECLINES: 'Tekrarlanan reddedilen işlemler.',
       NIGHT_HIGH_AMOUNT: 'Gece yüksek tutarlı işlem.',
       SUDDEN_AMOUNT_INCREASE: 'Ani tutar artışı.',
+      MULTI_MERCHANT_BURST: 'Kısa sürede farklı işyerleri.',
+      REPEATED_SAME_AMOUNT: 'Tekrarlanan aynı tutar.',
+      DECLINE_THEN_SUCCESS: 'Redlerden sonra başarılı işlem.',
       BASELINE: 'Yükseltilmiş risk sinyali yok.',
     },
     declineMessages: {
@@ -586,6 +589,21 @@ export const tr: Messages = {
         name: 'Ani tutar artışı',
         description:
           'Kartın son onaylı ortalama harcamasına göre ani tutar artışlarını işaretler.',
+      },
+      MULTI_MERCHANT_BURST: {
+        name: 'Kısa sürede farklı işyerleri',
+        description:
+          'Aynı kartın kısa süre içinde birden fazla farklı işyerinde kullanılması durumunda işaretler.',
+      },
+      REPEATED_SAME_AMOUNT: {
+        name: 'Tekrarlanan aynı tutar',
+        description:
+          'Aynı kartla kısa süre içerisinde aynı tutarın tekrar tekrar denenmesi durumunda işaretler.',
+      },
+      DECLINE_THEN_SUCCESS: {
+        name: 'Redlerden sonra başarılı işlem',
+        description:
+          'Aynı kartta kısa süre içindeki reddedilen işlemlerin ardından başarılı ödeme geldiğinde işaretler.',
       },
     },
     merchantCategories: {

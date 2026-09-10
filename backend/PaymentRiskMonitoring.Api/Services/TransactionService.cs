@@ -282,6 +282,7 @@ public class TransactionService
                 merchant,
                 card,
                 amount,
+                currency,
                 cancellationToken);
 
             if (decision.Status == TransactionStatus.Approved)
