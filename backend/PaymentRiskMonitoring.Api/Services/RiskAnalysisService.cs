@@ -17,6 +17,9 @@ public class RiskAnalysisService
     public const string MultipleDeclinesCode = "MULTIPLE_DECLINES";
     public const string NightHighAmountCode = "NIGHT_HIGH_AMOUNT";
     public const string SuddenAmountIncreaseCode = "SUDDEN_AMOUNT_INCREASE";
+    public const string MultiMerchantBurstCode = "MULTI_MERCHANT_BURST";
+    public const string RepeatedSameAmountCode = "REPEATED_SAME_AMOUNT";
+    public const string DeclineThenSuccessCode = "DECLINE_THEN_SUCCESS";
 
     public const int LowMaxScore = 39;
     public const int MediumMaxScore = 69;
@@ -27,8 +30,13 @@ public class RiskAnalysisService
     public const decimal DefaultHighUsageRatioThreshold = 0.8m;
     public const decimal DefaultNightHighAmountThreshold = 5_000m;
     public const decimal DefaultSuddenIncreaseMultiplier = 3m;
+    public const decimal DefaultMultiMerchantBurstThreshold = 3m;
+    public const decimal DefaultRepeatedSameAmountThreshold = 3m;
+    public const decimal DefaultDeclineThenSuccessThreshold = 2m;
 
     public const int VelocityWindowMinutes = 5;
+    /// <summary>Shared short lookback for burst / repeated-amount / decline-then-success patterns.</summary>
+    public const int ShortPatternWindowMinutes = 5;
     public const int DefaultVelocityPriorCountThreshold = 2;
     public const int MultipleDeclinesWindowHours = 24;
     public const int DefaultMultipleDeclinesThreshold = 2;
@@ -41,6 +49,9 @@ public class RiskAnalysisService
     public const int DefaultMultipleDeclinesPoints = 25;
     public const int DefaultNightHighAmountPoints = 20;
     public const int DefaultSuddenAmountIncreasePoints = 20;
+    public const int DefaultMultiMerchantBurstPoints = 25;
+    public const int DefaultRepeatedSameAmountPoints = 20;
+    public const int DefaultDeclineThenSuccessPoints = 20;
 
     /// <summary>
     /// Operational declines (inactive merchant/card, insufficient limit) are processing
@@ -61,6 +72,7 @@ public class RiskAnalysisService
         Merchant merchant,
         Card card,
         decimal amount,
+        string currency = "TRY",
         CancellationToken cancellationToken = default)
     {
         if (!merchant.IsActive)
@@ -87,7 +99,13 @@ public class RiskAnalysisService
         }
 
         var utcNow = _timeProvider.GetUtcNow().UtcDateTime;
-        return await AnalyzeApprovedPaymentAsync(card, amount, utcNow, cancellationToken);
+        return await AnalyzeApprovedPaymentAsync(
+            merchant,
+            card,
+            amount,
+            currency,
+            utcNow,
+            cancellationToken);
     }
 
     public RiskAnalysisResult CreateInsufficientLimitResult()
@@ -121,8 +139,10 @@ public class RiskAnalysisService
     }
 
     private async Task<RiskAnalysisResult> AnalyzeApprovedPaymentAsync(
+        Merchant merchant,
         Card card,
         decimal amount,
+        string currency,
         DateTime utcNow,
         CancellationToken cancellationToken)
     {
@@ -172,6 +192,21 @@ public class RiskAnalysisService
             SuddenAmountIncreaseCode,
             DefaultSuddenIncreaseMultiplier,
             DefaultSuddenAmountIncreasePoints)));
+        Apply(EvaluateMultiMerchantBurst(history, merchant.Id, utcNow, ResolveRule(
+            rules,
+            MultiMerchantBurstCode,
+            DefaultMultiMerchantBurstThreshold,
+            DefaultMultiMerchantBurstPoints)));
+        Apply(EvaluateRepeatedSameAmount(history, amount, currency, utcNow, ResolveRule(
+            rules,
+            RepeatedSameAmountCode,
+            DefaultRepeatedSameAmountThreshold,
+            DefaultRepeatedSameAmountPoints)));
+        Apply(EvaluateDeclineThenSuccess(history, utcNow, ResolveRule(
+            rules,
+            DeclineThenSuccessCode,
+            DefaultDeclineThenSuccessThreshold,
+            DefaultDeclineThenSuccessPoints)));
 
         if (reasons.Count == 0)
         {
@@ -404,6 +439,122 @@ public class RiskAnalysisService
             Points = rule.Points
         };
     }
+
+    public static RiskReason? EvaluateMultiMerchantBurst(
+        IReadOnlyList<Transaction> history,
+        Guid currentMerchantId,
+        DateTime utcNow,
+        RuleSettings rule)
+    {
+        if (!rule.IsEnabled)
+        {
+            return null;
+        }
+
+        var windowStart = utcNow.AddMinutes(-ShortPatternWindowMinutes);
+        var merchantIds = history
+            .Where(IsPaymentAttempt)
+            .Where(transaction => transaction.CreatedAt >= windowStart)
+            .Select(transaction => transaction.MerchantId)
+            .Append(currentMerchantId)
+            .Distinct()
+            .ToList();
+
+        var threshold = (int)decimal.Truncate(rule.Threshold);
+        if (merchantIds.Count < threshold)
+        {
+            return null;
+        }
+
+        return new RiskReason
+        {
+            Code = MultiMerchantBurstCode,
+            Message =
+                $"Card used at {merchantIds.Count} distinct merchants in the last {ShortPatternWindowMinutes} minutes.",
+            Points = rule.Points
+        };
+    }
+
+    public static RiskReason? EvaluateRepeatedSameAmount(
+        IReadOnlyList<Transaction> history,
+        decimal amount,
+        string currency,
+        DateTime utcNow,
+        RuleSettings rule)
+    {
+        if (!rule.IsEnabled)
+        {
+            return null;
+        }
+
+        var normalizedCurrency = currency.Trim().ToUpperInvariant();
+        var windowStart = utcNow.AddMinutes(-ShortPatternWindowMinutes);
+        var priorSameAmountCount = history.Count(transaction =>
+            IsPaymentAttempt(transaction) &&
+            transaction.CreatedAt >= windowStart &&
+            transaction.Amount == amount &&
+            string.Equals(
+                transaction.Currency.Trim(),
+                normalizedCurrency,
+                StringComparison.OrdinalIgnoreCase));
+
+        // Include the payment currently being analyzed.
+        var totalCount = priorSameAmountCount + 1;
+        var threshold = (int)decimal.Truncate(rule.Threshold);
+
+        if (totalCount < threshold)
+        {
+            return null;
+        }
+
+        return new RiskReason
+        {
+            Code = RepeatedSameAmountCode,
+            Message =
+                $"Card has {totalCount} attempts of {amount:0.##} {normalizedCurrency} in the last {ShortPatternWindowMinutes} minutes.",
+            Points = rule.Points
+        };
+    }
+
+    public static RiskReason? EvaluateDeclineThenSuccess(
+        IReadOnlyList<Transaction> history,
+        DateTime utcNow,
+        RuleSettings rule)
+    {
+        if (!rule.IsEnabled)
+        {
+            return null;
+        }
+
+        var windowStart = utcNow.AddMinutes(-ShortPatternWindowMinutes);
+        var priorDeclineCount = history.Count(transaction =>
+            transaction.Status == TransactionStatus.Declined &&
+            transaction.CreatedAt >= windowStart &&
+            transaction.CreatedAt < utcNow);
+
+        var threshold = (int)decimal.Truncate(rule.Threshold);
+        if (priorDeclineCount < threshold)
+        {
+            return null;
+        }
+
+        return new RiskReason
+        {
+            Code = DeclineThenSuccessCode,
+            Message =
+                $"Approved after {priorDeclineCount} declines in the last {ShortPatternWindowMinutes} minutes.",
+            Points = rule.Points
+        };
+    }
+
+    /// <summary>
+    /// Payment attempts only — refund rows are separate entities; exclude Pending.
+    /// </summary>
+    private static bool IsPaymentAttempt(Transaction transaction) =>
+        transaction.Status is TransactionStatus.Approved
+            or TransactionStatus.Declined
+            or TransactionStatus.PartiallyRefunded
+            or TransactionStatus.Refunded;
 
     private static RiskAnalysisResult Decline(
         int score,

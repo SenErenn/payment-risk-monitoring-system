@@ -542,6 +542,9 @@ export const en: Messages = {
       MULTIPLE_DECLINES: 'Multiple declines.',
       NIGHT_HIGH_AMOUNT: 'Night high amount.',
       SUDDEN_AMOUNT_INCREASE: 'Sudden amount increase.',
+      MULTI_MERCHANT_BURST: 'Multiple merchants in short period.',
+      REPEATED_SAME_AMOUNT: 'Repeated same amount.',
+      DECLINE_THEN_SUCCESS: 'Success after repeated declines.',
       BASELINE: 'No elevated risk signals.',
     },
     declineMessages: {
@@ -582,6 +585,21 @@ export const en: Messages = {
         name: 'Sudden amount increase',
         description:
           'Flags sudden increases versus the card’s recent approved average.',
+      },
+      MULTI_MERCHANT_BURST: {
+        name: 'Multiple merchants in short period',
+        description:
+          'Flags when the same card is used at multiple distinct merchants in a short window.',
+      },
+      REPEATED_SAME_AMOUNT: {
+        name: 'Repeated same amount',
+        description:
+          'Flags when the same card repeatedly attempts the same amount in a short window.',
+      },
+      DECLINE_THEN_SUCCESS: {
+        name: 'Success after repeated declines',
+        description:
+          'Flags an approval that follows several declines on the same card in a short window.',
       },
     },
     merchantCategories: {
