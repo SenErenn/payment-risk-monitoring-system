@@ -111,7 +111,8 @@ public class EntityAnalyticsService
             .Select(transaction => new
             {
                 transaction.Amount,
-                transaction.Status
+                transaction.Status,
+                RefundedAmount = transaction.Refunds.Sum(refund => (decimal?)refund.Amount) ?? 0m
             })
             .ToListAsync(cancellationToken);
 
@@ -129,7 +130,7 @@ public class EntityAnalyticsService
                 transaction.Status is TransactionStatus.Approved
                     or TransactionStatus.PartiallyRefunded
                     or TransactionStatus.Refunded)
-            .Sum(transaction => transaction.Amount);
+            .Sum(transaction => Math.Max(0m, transaction.Amount - transaction.RefundedAmount));
 
         return new CardAnalyticsDto
         {

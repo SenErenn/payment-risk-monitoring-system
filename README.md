@@ -360,6 +360,29 @@ Payment Simulator UI arrives in PR-014.
 - `GET /api/transactions/export?format=csv|excel` — StaffRead; respects list filters (max 5,000 rows)
 - Transactions page CSV / Excel export buttons
 
+## Architecture
+
+```text
+React (Vite)
+    ↓ JWT / SignalR
+ASP.NET Core Web API
+    ↓ DI Services (Risk, Payments, Alerts, Audit, Dashboard, …)
+Entity Framework Core
+    ↓
+PostgreSQL
+```
+
+Payment / risk flow:
+
+```text
+Payment request
+  → validation (merchant/card/amount/limit)
+  → RiskAnalysisService (rules from DB)
+  → Transaction (+ optional RiskAlert if High)
+  → Analyst review workflow
+  → Audit log
+```
+
 ### Finalization (PR-030)
 
 - xUnit test project: risk engine, validators, export formatter, refund lookup, auth/authorization integration
@@ -367,6 +390,12 @@ Payment Simulator UI arrives in PR-014.
 - Full `docker compose` stack: Postgres + API + frontend (nginx)
 - README: local + Docker setup, demo scenario, security notes, test commands
 - Removed unused Samples API endpoints; Users UI marked out of scope for v1
+
+### Final System Audit (PR-031)
+
+- End-to-end compliance pass against original 30-PR plan
+- Hardening: concurrent refund locking, card spending net of refunds, auth fallback policy, env gitignore, payment decision tests
+- Docker API default environment set to Production (migrate/seed still enabled via flags)
 
 ### PostgreSQL
 
@@ -436,6 +465,7 @@ This project is built incrementally across 30 PRs.
 | PR-028  | Done   | SignalR real-time monitoring     |
 | PR-029  | Done   | Audit logs + transaction export  |
 | PR-030  | Done   | Tests, security, Docker, finalization |
+| PR-031  | Done   | Final system audit & hardening       |
 
 ## License
 

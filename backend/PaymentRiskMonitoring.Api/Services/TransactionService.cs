@@ -181,9 +181,11 @@ public class TransactionService
         var idempotencyKey = NormalizeIdempotencyKey(
             request.IdempotencyKey ?? idempotencyKeyFromHeader);
 
-        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(
-            IsolationLevel.ReadCommitted,
-            cancellationToken);
+        await using var dbTransaction = _dbContext.Database.IsRelational()
+            ? await _dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.ReadCommitted,
+                cancellationToken)
+            : null;
 
         try
         {
@@ -193,7 +195,11 @@ public class TransactionService
                 if (existingByKey is not null)
                 {
                     EnsureIdempotentPayloadMatches(existingByKey, request, currency, amount);
-                    await dbTransaction.CommitAsync(cancellationToken);
+                    if (dbTransaction is not null)
+                    {
+                        await dbTransaction.CommitAsync(cancellationToken);
+                    }
+
                     return new CreateTransactionResult
                     {
                         Transaction = MapTransaction(existingByKey, isReplay: true),
@@ -211,7 +217,11 @@ public class TransactionService
 
                 if (recentDuplicate is not null)
                 {
-                    await dbTransaction.CommitAsync(cancellationToken);
+                    if (dbTransaction is not null)
+                    {
+                        await dbTransaction.CommitAsync(cancellationToken);
+                    }
+
                     return new CreateTransactionResult
                     {
                         Transaction = MapTransaction(recentDuplicate, isReplay: true),
@@ -229,9 +239,12 @@ public class TransactionService
             }
 
             // Lock the card row so concurrent approvals cannot double-spend the same limit.
-            await _dbContext.Database.ExecuteSqlInterpolatedAsync(
-                $"""SELECT 1 FROM "Cards" WHERE "Id" = {request.CardId} FOR UPDATE""",
-                cancellationToken);
+            if (_dbContext.Database.IsRelational())
+            {
+                await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+                    $"""SELECT 1 FROM "Cards" WHERE "Id" = {request.CardId} FOR UPDATE""",
+                    cancellationToken);
+            }
 
             var card = await _dbContext.Cards
                 .FirstOrDefaultAsync(item => item.Id == request.CardId, cancellationToken);
@@ -239,6 +252,30 @@ public class TransactionService
             if (card is null)
             {
                 throw new NotFoundException("Card", request.CardId);
+            }
+
+            // Re-check duplicate window under the card lock when no idempotency key was supplied.
+            if (idempotencyKey is null)
+            {
+                var recentDuplicate = await FindRecentDuplicateAsync(
+                    request,
+                    currency,
+                    amount,
+                    cancellationToken);
+
+                if (recentDuplicate is not null)
+                {
+                    if (dbTransaction is not null)
+                    {
+                        await dbTransaction.CommitAsync(cancellationToken);
+                    }
+
+                    return new CreateTransactionResult
+                    {
+                        Transaction = MapTransaction(recentDuplicate, isReplay: true),
+                        WasCreated = false
+                    };
+                }
             }
 
             var decision = await _riskAnalysisService.AnalyzePaymentAsync(
@@ -302,7 +339,10 @@ public class TransactionService
             {
                 // Concurrent retry with the same key: return the winner instead of failing.
                 _dbContext.ChangeTracker.Clear();
-                await dbTransaction.RollbackAsync(cancellationToken);
+                if (dbTransaction is not null)
+                {
+                    await dbTransaction.RollbackAsync(cancellationToken);
+                }
 
                 var concurrent = await FindByIdempotencyKeyAsync(idempotencyKey, cancellationToken);
                 if (concurrent is not null)
@@ -318,7 +358,10 @@ public class TransactionService
                 throw;
             }
 
-            await dbTransaction.CommitAsync(cancellationToken);
+            if (dbTransaction is not null)
+            {
+                await dbTransaction.CommitAsync(cancellationToken);
+            }
 
             var createdDto = MapTransaction(transaction);
             await _realtimeEventPublisher.PublishTransactionCreatedAsync(createdDto, cancellationToken);
@@ -338,7 +381,7 @@ public class TransactionService
         }
         catch
         {
-            if (_dbContext.Database.CurrentTransaction is not null)
+            if (dbTransaction is not null)
             {
                 await dbTransaction.RollbackAsync(cancellationToken);
             }

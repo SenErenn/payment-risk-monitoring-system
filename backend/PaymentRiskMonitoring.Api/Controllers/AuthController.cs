@@ -58,24 +58,6 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<AuthenticatedUserDto>.Ok(user, "Current user retrieved."));
     }
 
-    [Authorize(Policy = AuthorizationPolicies.AdminOnly)]
-    [HttpGet("admin-check")]
-    public ActionResult<ApiResponse<object>> AdminCheck()
-    {
-        return Ok(ApiResponse<object>.Ok(
-            CreateRolePayload("Admin access confirmed."),
-            "Admin authorization succeeded."));
-    }
-
-    [Authorize(Policy = AuthorizationPolicies.AnalystOrAdmin)]
-    [HttpGet("analyst-check")]
-    public ActionResult<ApiResponse<object>> AnalystCheck()
-    {
-        return Ok(ApiResponse<object>.Ok(
-            CreateRolePayload("Analyst access confirmed."),
-            "Analyst authorization succeeded."));
-    }
-
     [Authorize(Policy = AuthorizationPolicies.StaffRead)]
     [HttpGet("access")]
     public ActionResult<ApiResponse<object>> Access()
@@ -101,16 +83,6 @@ public class AuthController : ControllerBase
         };
 
         return Ok(ApiResponse<object>.Ok(payload, "Access profile retrieved."));
-    }
-
-    private object CreateRolePayload(string message)
-    {
-        return new
-        {
-            message,
-            role = User.FindFirstValue(ClaimTypes.Role),
-            checkedAtUtc = DateTime.UtcNow
-        };
     }
 
     private Guid GetCurrentUserId()
