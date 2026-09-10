@@ -4,6 +4,11 @@ import { listAuditActions, listAuditLogs } from '../api/auditLogs'
 import type { AuditLog, PagedResult } from '../api/auditLogTypes'
 import { ApiError } from '../api/client'
 import { useLocale, useT } from '../i18n'
+import {
+  localizeAuditAction,
+  localizeAuditEntityType,
+  localizeAuditSummary,
+} from '../i18n/displayLabels'
 import { formatDateTime } from './transactionUi'
 
 const ENTITY_TYPES = [
@@ -253,7 +258,7 @@ export function AuditLogsPage() {
               <option value="">{t('common.all')}</option>
               {actions.map((action) => (
                 <option key={action} value={action}>
-                  {action}
+                  {localizeAuditAction(t, action)}
                 </option>
               ))}
             </select>
@@ -271,7 +276,7 @@ export function AuditLogsPage() {
               <option value="">{t('common.all')}</option>
               {ENTITY_TYPES.map((entityType) => (
                 <option key={entityType} value={entityType}>
-                  {entityType}
+                  {localizeAuditEntityType(t, entityType)}
                 </option>
               ))}
             </select>
@@ -335,13 +340,18 @@ export function AuditLogsPage() {
                       <div className="muted-text">{log.userEmail || '—'}</div>
                     </td>
                     <td>
-                      <code>{log.action}</code>
+                      <div title={log.action}>
+                        {localizeAuditAction(t, log.action)}
+                      </div>
+                      <div className="muted-text mono-text">{log.action}</div>
                     </td>
                     <td>
-                      <div>{log.entityType}</div>
+                      <div>
+                        {localizeAuditEntityType(t, log.entityType)}
+                      </div>
                       <div className="muted-text">{log.entityId || '—'}</div>
                     </td>
-                    <td>{log.summary}</td>
+                    <td>{localizeAuditSummary(t, log.action, log.summary)}</td>
                     <td>
                       <button
                         type="button"

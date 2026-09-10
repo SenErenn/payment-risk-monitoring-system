@@ -62,8 +62,10 @@ public class RiskAnalysisServiceTests
         var result = await service.AnalyzePaymentAsync(merchant, card, 10m);
 
         result.Status.Should().Be(TransactionStatus.Declined);
-        result.RiskScore.Should().Be(RiskAnalysisService.InactiveMerchantScore);
+        result.RiskScore.Should().Be(RiskAnalysisService.OperationalDeclineScore);
+        result.RiskLevel.Should().Be(RiskLevel.Low);
         result.RiskReasons.Should().Contain(r => r.Code == "MERCHANT_INACTIVE");
+        result.RiskReasons.Should().OnlyContain(r => r.Points == 0);
     }
 
     [Fact]
@@ -98,6 +100,8 @@ public class RiskAnalysisServiceTests
 
         result.Status.Should().Be(TransactionStatus.Declined);
         result.RiskReasons.Should().Contain(r => r.Code == "INSUFFICIENT_LIMIT");
+        result.RiskScore.Should().Be(RiskAnalysisService.OperationalDeclineScore);
+        result.RiskLevel.Should().Be(RiskLevel.Low);
     }
 
     [Fact]

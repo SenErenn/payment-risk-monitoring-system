@@ -531,4 +531,114 @@ export const en: Messages = {
     Count: 'Count',
     Multiplier: 'Multiplier',
   },
+  codes: {
+    riskReasons: {
+      MERCHANT_INACTIVE: 'Merchant is inactive.',
+      CARD_NOT_ACTIVE: 'Card is not active.',
+      INSUFFICIENT_LIMIT: 'Insufficient available limit.',
+      HIGH_AMOUNT: 'High amount.',
+      HIGH_LIMIT_USAGE: 'High limit usage.',
+      VELOCITY: 'High transaction velocity.',
+      MULTIPLE_DECLINES: 'Multiple declines.',
+      NIGHT_HIGH_AMOUNT: 'Night high amount.',
+      SUDDEN_AMOUNT_INCREASE: 'Sudden amount increase.',
+      BASELINE: 'No elevated risk signals.',
+    },
+    declineMessages: {
+      MERCHANT_INACTIVE: 'Declined: merchant is inactive.',
+      CARD_NOT_ACTIVE: 'Declined: card is not active.',
+      INSUFFICIENT_LIMIT: 'Declined: insufficient available limit.',
+    },
+    decisionMessages: {
+      APPROVED: 'Approved.',
+      APPROVED_WITH_RISK: 'Approved with risk score {score} ({level}).',
+    },
+    riskRules: {
+      HIGH_AMOUNT: {
+        name: 'High amount',
+        description:
+          'Flags payments at or above the configured amount threshold.',
+      },
+      HIGH_LIMIT_USAGE: {
+        name: 'High limit usage',
+        description:
+          'Flags when projected credit usage reaches the configured ratio.',
+      },
+      VELOCITY: {
+        name: 'Velocity',
+        description:
+          'Flags when the same card produces many transactions in a short window.',
+      },
+      MULTIPLE_DECLINES: {
+        name: 'Multiple declines',
+        description:
+          'Flags when the same card has multiple declines in a short window.',
+      },
+      NIGHT_HIGH_AMOUNT: {
+        name: 'Night high amount',
+        description: 'Flags high-amount payments during night hours (UTC).',
+      },
+      SUDDEN_AMOUNT_INCREASE: {
+        name: 'Sudden amount increase',
+        description:
+          'Flags sudden increases versus the card’s recent approved average.',
+      },
+    },
+    merchantCategories: {
+      Travel: 'Travel',
+      Electronics: 'Electronics',
+      Retail: 'Retail',
+      Grocery: 'Grocery',
+      Restaurant: 'Restaurant',
+      Fuel: 'Fuel',
+      Services: 'Services',
+      Other: 'Other',
+    },
+    auditActions: {
+      UserLogin: 'User login',
+      MerchantCreated: 'Merchant created',
+      MerchantUpdated: 'Merchant updated',
+      MerchantActivated: 'Merchant activated',
+      MerchantDeactivated: 'Merchant deactivated',
+      CardCreated: 'Card created',
+      CardUpdated: 'Card updated',
+      CardStatusChanged: 'Card status changed',
+      TransactionCreated: 'Transaction created',
+      RefundCreated: 'Refund created',
+      TransactionsExported: 'Transactions exported',
+      RiskRuleUpdated: 'Risk rule updated',
+      RiskAlertReviewed: 'Risk alert reviewed',
+    },
+    auditEntities: {
+      User: 'User',
+      Merchant: 'Merchant',
+      Card: 'Card',
+      Transaction: 'Transaction',
+      Refund: 'Refund',
+      RiskRule: 'Risk rule',
+      RiskAlert: 'Risk alert',
+    },
+    auditSummaries: {
+      UserLogin: 'User {email} signed in.',
+      TransactionsExported:
+        'Exported {count} transaction(s) as {format}.',
+      MerchantCreated: 'Merchant {code} created.',
+      MerchantUpdated: 'Merchant {code} updated.',
+      MerchantActivated: 'Merchant {code} activated.',
+      MerchantDeactivated: 'Merchant {code} deactivated.',
+      CardCreated: 'Card {card} created.',
+      CardUpdated: 'Card {card} limits updated.',
+      CardStatusSet: 'Card {card} status set to {status}.',
+      cardStatus: {
+        blocked: 'Card {card} blocked.',
+        activated: 'Card {card} activated.',
+        deactivated: 'Card {card} deactivated.',
+      },
+      TransactionCreated: 'Transaction {code} created ({status}).',
+      RefundCreated:
+        'Refund {refund} created for transaction {transaction}.',
+      RiskRuleUpdated: 'Risk rule {code} updated.',
+      RiskAlertReviewed: 'Risk alert {code} reviewed → {status}.',
+    },
+  },
 }

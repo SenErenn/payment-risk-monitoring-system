@@ -1,11 +1,14 @@
 import type { CardStatus } from '../api/cardTypes'
+import { formatAmount } from './transactionUi'
 
-export function formatMoney(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-  }).format(value)
+/** Demo card limits use TRY (same as payments). */
+export const CARD_DISPLAY_CURRENCY = 'TRY'
+
+export function formatMoney(
+  value: number,
+  currency: string = CARD_DISPLAY_CURRENCY,
+): string {
+  return formatAmount(value, currency)
 }
 
 export function formatDateTime(value: string, locale = 'tr-TR'): string {

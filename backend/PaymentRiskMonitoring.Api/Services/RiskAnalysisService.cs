@@ -42,9 +42,11 @@ public class RiskAnalysisService
     public const int DefaultNightHighAmountPoints = 20;
     public const int DefaultSuddenAmountIncreasePoints = 20;
 
-    public const int InsufficientLimitScore = 70;
-    public const int InactiveMerchantScore = 75;
-    public const int InactiveCardScore = 80;
+    /// <summary>
+    /// Operational declines (inactive merchant/card, insufficient limit) are processing
+    /// failures, not fraud signals — keep score Low so they do not open High risk alerts.
+    /// </summary>
+    public const int OperationalDeclineScore = 0;
 
     private readonly AppDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
@@ -64,7 +66,7 @@ public class RiskAnalysisService
         if (!merchant.IsActive)
         {
             return Decline(
-                InactiveMerchantScore,
+                OperationalDeclineScore,
                 "MERCHANT_INACTIVE",
                 "Merchant is inactive.",
                 "Declined: merchant is inactive.");
@@ -73,7 +75,7 @@ public class RiskAnalysisService
         if (card.Status != CardStatus.Active)
         {
             return Decline(
-                InactiveCardScore,
+                OperationalDeclineScore,
                 "CARD_NOT_ACTIVE",
                 $"Card status is {card.Status}.",
                 $"Declined: card status is {card.Status}.");
@@ -91,7 +93,7 @@ public class RiskAnalysisService
     public RiskAnalysisResult CreateInsufficientLimitResult()
     {
         return Decline(
-            InsufficientLimitScore,
+            OperationalDeclineScore,
             "INSUFFICIENT_LIMIT",
             "Insufficient available limit.",
             "Declined: insufficient available limit.");
@@ -409,6 +411,9 @@ public class RiskAnalysisService
         string reasonMessage,
         string decisionMessage)
     {
+        // Operational decline reason points stay 0 so UI does not treat them as fraud points.
+        var reasonPoints = score > 0 ? score : 0;
+
         return new RiskAnalysisResult
         {
             Status = TransactionStatus.Declined,
@@ -420,7 +425,7 @@ public class RiskAnalysisService
                 {
                     Code = code,
                     Message = reasonMessage,
-                    Points = score
+                    Points = reasonPoints
                 }
             ],
             DecisionMessage = decisionMessage

@@ -8,6 +8,7 @@ import {
 import type { Merchant, PagedResult } from '../api/merchantTypes'
 import { useAuth } from '../auth/AuthContext'
 import { useLocale, useT } from '../i18n'
+import { localizeMerchantCategory } from '../i18n/displayLabels'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
 
@@ -284,7 +285,7 @@ export function MerchantsPage() {
                       </Link>
                     </td>
                     <td>{merchant.name}</td>
-                    <td>{merchant.category}</td>
+                    <td>{localizeMerchantCategory(t, merchant.category)}</td>
                     <td>
                       <span
                         className={
