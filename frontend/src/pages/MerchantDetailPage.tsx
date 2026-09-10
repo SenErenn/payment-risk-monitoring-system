@@ -13,6 +13,7 @@ import { listTransactions } from '../api/transactions'
 import type { Transaction } from '../api/transactionTypes'
 import { useAuth } from '../auth/AuthContext'
 import { useLocale, useT } from '../i18n'
+import { localizeMerchantCategory } from '../i18n/displayLabels'
 import { defaultLast24HoursLocal, formatPercent } from './dateRangeUi'
 import {
   formatAmount,
@@ -401,7 +402,7 @@ export function MerchantDetailPage() {
         </div>
         <div className="info-card">
           <span className="info-label">{t('merchants.category')}</span>
-          <strong>{merchant.category}</strong>
+          <strong>{localizeMerchantCategory(t, merchant.category)}</strong>
         </div>
         <div className="info-card">
           <span className="info-label">{t('common.status')}</span>

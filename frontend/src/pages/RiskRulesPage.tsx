@@ -3,6 +3,10 @@ import { ApiError } from '../api/client'
 import { listRiskRules, updateRiskRule } from '../api/riskRules'
 import type { RiskRule, RiskRuleThresholdUnit } from '../api/riskRuleTypes'
 import { useLocale, useT } from '../i18n'
+import {
+  localizeRiskRuleDescription,
+  localizeRiskRuleName,
+} from '../i18n/displayLabels'
 import { formatDateTime } from './transactionUi'
 
 interface RuleDraft {
@@ -225,8 +229,16 @@ export function RiskRulesPage() {
                       <span className="mono-text">{rule.code}</span>
                     </td>
                     <td>
-                      <div>{rule.name}</div>
-                      <span className="muted-text">{rule.description}</span>
+                      <div>
+                        {localizeRiskRuleName(t, rule.code, rule.name)}
+                      </div>
+                      <span className="muted-text">
+                        {localizeRiskRuleDescription(
+                          t,
+                          rule.code,
+                          rule.description,
+                        )}
+                      </span>
                     </td>
                     <td>
                       {isEditing ? (

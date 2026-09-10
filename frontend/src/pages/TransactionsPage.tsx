@@ -17,6 +17,7 @@ import type {
 } from '../api/transactionTypes'
 import { useAuth } from '../auth/AuthContext'
 import { useLocale, useT } from '../i18n'
+import { localizeDeclineOrDecision } from '../i18n/displayLabels'
 import { MonitoringEvents, useRealtimeEvent } from '../realtime'
 import {
   decisionPanelClass,
@@ -613,7 +614,8 @@ export function TransactionsPage() {
                 {cards.map((card) => (
                   <option key={card.id} value={card.id}>
                     {card.maskedCardNumber} · {t(`status.${card.cardType}`)} ·{' '}
-                    {t(`status.${card.status}`)} · {card.availableLimit.toFixed(2)}
+                    {t(`status.${card.status}`)} ·{' '}
+                    {formatAmount(card.availableLimit, 'TRY')}
                   </option>
                 ))}
               </select>
@@ -670,7 +672,9 @@ export function TransactionsPage() {
           {selectedCard ? (
             <p className="form-hint">
               {t('transactions.availableLimit')}{' '}
-              <strong>{selectedCard.availableLimit.toFixed(2)}</strong>
+              <strong>
+                {formatAmount(selectedCard.availableLimit, 'TRY')}
+              </strong>
             </p>
           ) : null}
 
@@ -686,8 +690,14 @@ export function TransactionsPage() {
                 <span className="mono-text">{lastResult.transactionCode}</span>
               </div>
               <p>
-                {lastResult.declineReason ??
-                  lastResult.decisionMessage ??
+                {localizeDeclineOrDecision(t, {
+                  status: lastResult.status,
+                  riskCodes: lastResult.riskReasons?.map((r) => r.code),
+                  riskScore: lastResult.riskScore,
+                  riskLevel: lastResult.riskLevel,
+                  declineReason: lastResult.declineReason,
+                  decisionMessage: lastResult.decisionMessage,
+                }) ||
                   `${formatAmount(lastResult.amount, lastResult.currency)} · ${t(`status.${lastResult.paymentType}`)}`}
               </p>
               <p className="form-hint">

@@ -534,4 +534,115 @@ export const tr: Messages = {
     Count: 'Adet',
     Multiplier: 'Çarpan',
   },
+  codes: {
+    riskReasons: {
+      MERCHANT_INACTIVE: 'İşyeri pasif durumda.',
+      CARD_NOT_ACTIVE: 'Kart aktif değil.',
+      INSUFFICIENT_LIMIT: 'Yetersiz kullanılabilir limit.',
+      HIGH_AMOUNT: 'Yüksek tutar.',
+      HIGH_LIMIT_USAGE: 'Yüksek limit kullanımı.',
+      VELOCITY: 'Kısa sürede yoğun işlem.',
+      MULTIPLE_DECLINES: 'Tekrarlanan reddedilen işlemler.',
+      NIGHT_HIGH_AMOUNT: 'Gece yüksek tutarlı işlem.',
+      SUDDEN_AMOUNT_INCREASE: 'Ani tutar artışı.',
+      BASELINE: 'Yükseltilmiş risk sinyali yok.',
+    },
+    declineMessages: {
+      MERCHANT_INACTIVE: 'Reddedildi: işyeri pasif durumda.',
+      CARD_NOT_ACTIVE: 'Reddedildi: kart aktif değil.',
+      INSUFFICIENT_LIMIT: 'Reddedildi: yetersiz kullanılabilir limit.',
+    },
+    decisionMessages: {
+      APPROVED: 'Onaylandı.',
+      APPROVED_WITH_RISK: 'Risk skoru {score} ({level}) ile onaylandı.',
+    },
+    riskRules: {
+      HIGH_AMOUNT: {
+        name: 'Yüksek tutar',
+        description:
+          'Yapılandırılan tutar eşiğine eşit veya üzerindeki ödemeleri işaretler.',
+      },
+      HIGH_LIMIT_USAGE: {
+        name: 'Yüksek limit kullanımı',
+        description:
+          'Kartın proje edilen kredi kullanımı yapılandırılan oranı aştığında işaretler.',
+      },
+      VELOCITY: {
+        name: 'Kısa sürede yoğun işlem',
+        description:
+          'Aynı karttan kısa süre içinde çok sayıda işlem geldiğinde işaretler.',
+      },
+      MULTIPLE_DECLINES: {
+        name: 'Tekrarlanan reddedilen işlemler',
+        description:
+          'Aynı kart için kısa sürede birden fazla reddedilen işlem olduğunda işaretler.',
+      },
+      NIGHT_HIGH_AMOUNT: {
+        name: 'Gece yüksek tutarlı işlem',
+        description:
+          'Gece saatlerinde (UTC) yüksek tutarlı ödemeleri işaretler.',
+      },
+      SUDDEN_AMOUNT_INCREASE: {
+        name: 'Ani tutar artışı',
+        description:
+          'Kartın son onaylı ortalama harcamasına göre ani tutar artışlarını işaretler.',
+      },
+    },
+    merchantCategories: {
+      Travel: 'Seyahat',
+      Electronics: 'Elektronik',
+      Retail: 'Perakende',
+      Grocery: 'Market',
+      Restaurant: 'Restoran',
+      Fuel: 'Yakıt',
+      Services: 'Hizmetler',
+      Other: 'Diğer',
+    },
+    auditActions: {
+      UserLogin: 'Kullanıcı girişi',
+      MerchantCreated: 'İşyeri oluşturuldu',
+      MerchantUpdated: 'İşyeri güncellendi',
+      MerchantActivated: 'İşyeri etkinleştirildi',
+      MerchantDeactivated: 'İşyeri pasife alındı',
+      CardCreated: 'Kart oluşturuldu',
+      CardUpdated: 'Kart güncellendi',
+      CardStatusChanged: 'Kart durumu değişti',
+      TransactionCreated: 'İşlem oluşturuldu',
+      RefundCreated: 'İade oluşturuldu',
+      TransactionsExported: 'İşlemler dışa aktarıldı',
+      RiskRuleUpdated: 'Risk kuralı güncellendi',
+      RiskAlertReviewed: 'Risk uyarısı incelendi',
+    },
+    auditEntities: {
+      User: 'Kullanıcı',
+      Merchant: 'İşyeri',
+      Card: 'Kart',
+      Transaction: 'İşlem',
+      Refund: 'İade',
+      RiskRule: 'Risk kuralı',
+      RiskAlert: 'Risk uyarısı',
+    },
+    auditSummaries: {
+      UserLogin: '{email} kullanıcısı giriş yaptı.',
+      TransactionsExported:
+        '{count} işlem {format} olarak dışa aktarıldı.',
+      MerchantCreated: '{code} işyeri oluşturuldu.',
+      MerchantUpdated: '{code} işyeri güncellendi.',
+      MerchantActivated: '{code} işyeri etkinleştirildi.',
+      MerchantDeactivated: '{code} işyeri pasife alındı.',
+      CardCreated: '{card} kartı oluşturuldu.',
+      CardUpdated: '{card} kart limitleri güncellendi.',
+      CardStatusSet: '{card} kart durumu {status} olarak ayarlandı.',
+      cardStatus: {
+        blocked: '{card} kartı bloke edildi.',
+        activated: '{card} kartı etkinleştirildi.',
+        deactivated: '{card} kartı pasife alındı.',
+      },
+      TransactionCreated: '{code} işlemi oluşturuldu ({status}).',
+      RefundCreated:
+        '{refund} iadesi {transaction} işlemi için oluşturuldu.',
+      RiskRuleUpdated: '{code} risk kuralı güncellendi.',
+      RiskAlertReviewed: '{code} risk uyarısı incelendi → {status}.',
+    },
+  },
 }

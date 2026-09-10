@@ -173,8 +173,19 @@ public class DashboardService
                 DateTimeKind.Utc))
             .ToDictionary(group => group.Key, group => group.Count());
 
+        // Half-open [startHour, endHour): a 24h window yields 24 buckets, not 25.
         var buckets = new List<HourlyBucketDto>();
-        for (var hour = startHour; hour <= endHour; hour = hour.AddHours(1))
+        if (startHour == endHour)
+        {
+            buckets.Add(new HourlyBucketDto
+            {
+                HourUtc = startHour,
+                Count = counts.GetValueOrDefault(startHour)
+            });
+            return buckets;
+        }
+
+        for (var hour = startHour; hour < endHour; hour = hour.AddHours(1))
         {
             buckets.Add(new HourlyBucketDto
             {

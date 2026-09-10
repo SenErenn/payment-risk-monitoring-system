@@ -4,6 +4,10 @@ import { ApiError } from '../api/client'
 import { createRefund, getTransaction } from '../api/transactions'
 import type { Transaction } from '../api/transactionTypes'
 import { useAuth } from '../auth/AuthContext'
+import {
+  localizeDeclineOrDecision,
+  localizeRiskReasonMessage,
+} from '../i18n/displayLabels'
 import { useLocale, useT } from '../i18n'
 import {
   decisionPanelClass,
@@ -230,9 +234,14 @@ export function TransactionDetailPage() {
           </span>
         </div>
         <p>
-          {transaction.declineReason ??
-            transaction.decisionMessage ??
-            t('transactions.noDecision')}
+          {localizeDeclineOrDecision(t, {
+            status: transaction.status,
+            riskCodes: transaction.riskReasons?.map((r) => r.code),
+            riskScore: transaction.riskScore,
+            riskLevel: transaction.riskLevel,
+            declineReason: transaction.declineReason,
+            decisionMessage: transaction.decisionMessage,
+          })}
         </p>
         {transaction.status === 'Declined' && transaction.declineReason ? (
           <p className="form-hint">{t('transactions.declinePersisted')}</p>
@@ -244,7 +253,13 @@ export function TransactionDetailPage() {
               {transaction.riskReasons.map((reason) => (
                 <li key={`${reason.code}-${reason.message}`}>
                   <span className="mono-text">{reason.code}</span>
-                  <span>{reason.message}</span>
+                  <span>
+                    {localizeRiskReasonMessage(
+                      t,
+                      reason.code,
+                      reason.message,
+                    )}
+                  </span>
                   {typeof reason.points === 'number' && reason.points > 0 ? (
                     <span className="muted-text">
                       {t('transactions.riskReasonPoints', {

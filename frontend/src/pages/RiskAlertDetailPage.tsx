@@ -6,6 +6,7 @@ import { getRiskAlert, reviewRiskAlert } from '../api/riskAlerts'
 import type { AlertStatus, RiskAlert } from '../api/riskAlertTypes'
 import { useAuth } from '../auth/AuthContext'
 import { useLocale, useT } from '../i18n'
+import { localizeRiskReasonMessage } from '../i18n/displayLabels'
 import {
   alertDecisionPanelClass,
   alertStatusClass,
@@ -191,7 +192,13 @@ export function RiskAlertDetailPage() {
               {alert.riskReasons.map((reason) => (
                 <li key={`${reason.code}-${reason.message}`}>
                   <span className="mono-text">{reason.code}</span>
-                  <span>{reason.message}</span>
+                  <span>
+                    {localizeRiskReasonMessage(
+                      t,
+                      reason.code,
+                      reason.message,
+                    )}
+                  </span>
                   {typeof reason.points === 'number' && reason.points > 0 ? (
                     <span className="muted-text">
                       {t('riskAlerts.riskReasonPoints', {

@@ -549,10 +549,12 @@ public class TransactionService
             ?? [];
 
         var refundedAmount = refunds.Sum(refund => refund.Amount);
-        var refundableAmount = Math.Max(0, transaction.Amount - refundedAmount);
+        var remainingCollected = Math.Max(0, transaction.Amount - refundedAmount);
         var canRefund =
             (transaction.Status is TransactionStatus.Approved or TransactionStatus.PartiallyRefunded)
-            && refundableAmount > 0;
+            && remainingCollected > 0;
+        // Only collected (eligible) balances are refundable — Declined/Pending/FullyRefunded → 0.
+        var refundableAmount = canRefund ? remainingCollected : 0m;
 
         return new TransactionDto
         {

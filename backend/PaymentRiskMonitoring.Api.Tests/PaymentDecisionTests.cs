@@ -77,6 +77,59 @@ public class PaymentDecisionTests
 
         result.Transaction.Status.Should().Be(TransactionStatus.Declined);
         result.Transaction.RiskReasons.Should().Contain(r => r.Code == "INSUFFICIENT_LIMIT");
+        result.Transaction.RiskLevel.Should().Be(RiskLevel.Low);
+        result.Transaction.RiskScore.Should().Be(0);
+        result.Transaction.RefundableAmount.Should().Be(0);
+        result.Transaction.CanRefund.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CreateTransaction_InactiveMerchant_DeclinesWithoutHighRiskAlert()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var (merchant, card) = await SeedActiveMerchantAndCardAsync(db, availableLimit: 10_000m);
+        merchant.IsActive = false;
+        await db.SaveChangesAsync();
+        var service = CreateTransactionService(db);
+
+        var result = await service.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            MerchantId = merchant.Id,
+            CardId = card.Id,
+            Amount = 50m,
+            Currency = "TRY",
+            PaymentType = PaymentType.Online,
+            IdempotencyKey = $"pay-{Guid.NewGuid():N}"
+        });
+
+        result.Transaction.Status.Should().Be(TransactionStatus.Declined);
+        result.Transaction.RiskLevel.Should().Be(RiskLevel.Low);
+        result.Transaction.RiskScore.Should().Be(0);
+        result.Transaction.RiskReasons.Should().Contain(r => r.Code == "MERCHANT_INACTIVE");
+        result.Transaction.RefundableAmount.Should().Be(0);
+        db.RiskAlerts.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateTransaction_Approved_RefundableEqualsAmount()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var (merchant, card) = await SeedActiveMerchantAndCardAsync(db, availableLimit: 10_000m);
+        var service = CreateTransactionService(db);
+
+        var result = await service.CreateTransactionAsync(new CreateTransactionRequest
+        {
+            MerchantId = merchant.Id,
+            CardId = card.Id,
+            Amount = 1_000m,
+            Currency = "TRY",
+            PaymentType = PaymentType.Chip,
+            IdempotencyKey = $"pay-{Guid.NewGuid():N}"
+        });
+
+        result.Transaction.Status.Should().Be(TransactionStatus.Approved);
+        result.Transaction.CanRefund.Should().BeTrue();
+        result.Transaction.RefundableAmount.Should().Be(1_000m);
     }
 
     [Fact]
